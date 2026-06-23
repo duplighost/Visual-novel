@@ -1,0 +1,498 @@
+// ============================================================================
+//  ENGINE  —  the visual-novel runtime for STATIC
+// ============================================================================
+
+const SAVE_KEY = "static_vn_save_v1";
+
+const State = {
+  flags: {},          // freetime completions etc.
+  bullets: [],        // collected truth bullet ids
+  freetimeOpen: false,
+  visited: {},        // investigation spots seen
+};
+
+// ---- mascot sprite (not a roster character) ---------------------------------
+function staticSprite() {
+  return `
+  <svg viewBox="0 0 200 240" width="100%" height="100%" preserveAspectRatio="xMidYMax meet" class="dr-portrait" aria-label="STATIC">
+    <defs><radialGradient id="st_glow" cx="0.5" cy="0.4" r="0.6">
+      <stop offset="0" stop-color="#ff2d6f" stop-opacity="0.5"/><stop offset="1" stop-color="#ff2d6f" stop-opacity="0"/>
+    </radialGradient></defs>
+    <rect x="0" y="0" width="200" height="240" fill="url(#st_glow)"/>
+    <!-- mic stand -->
+    <rect x="96" y="150" width="8" height="80" fill="#1b1b22"/>
+    <ellipse cx="100" cy="232" rx="40" ry="8" fill="#1b1b22"/>
+    <!-- mic head -->
+    <circle cx="100" cy="100" r="62" fill="#15151b" stroke="#ff2d6f" stroke-width="3"/>
+    <g stroke="#3a3a46" stroke-width="2">
+      <line x1="58" y1="78" x2="142" y2="78"/><line x1="52" y1="92" x2="148" y2="92"/>
+      <line x1="50" y1="106" x2="150" y2="106"/><line x1="54" y1="120" x2="146" y2="120"/>
+      <line x1="62" y1="134" x2="138" y2="134"/>
+    </g>
+    <!-- teeth grin -->
+    <path d="M62 118 Q100 150 138 118 L138 124 Q100 158 62 124 Z" fill="#0a0a0d"/>
+    <g fill="#e8e8ee"><path d="M70 122 l8 10 8 -10z"/><path d="M86 124 l8 11 8 -11z"/><path d="M102 124 l8 11 8 -11z"/><path d="M118 122 l8 10 8 -10z"/></g>
+    <!-- one recording eye, one dead eye -->
+    <circle cx="78" cy="92" r="14" fill="#0a0a0d" stroke="#3a3a46" stroke-width="2"/>
+    <circle cx="78" cy="92" r="5" fill="#e8e8ee"/>
+    <circle cx="122" cy="92" r="14" fill="#3a0010" stroke="#ff2d6f" stroke-width="2"/>
+    <circle cx="122" cy="92" r="7" fill="#ff2d6f"><animate attributeName="opacity" values="1;0.3;1" dur="1.6s" repeatCount="indefinite"/></circle>
+    <text x="122" y="96" text-anchor="middle" font-size="8" fill="#0a0a0d" font-weight="bold">REC</text>
+  </svg>`;
+}
+
+function spriteFor(id) {
+  if (!id) return "";
+  if (id === "static") return staticSprite();
+  const c = CHARACTERS[id];
+  return c ? buildPortrait(c) : "";
+}
+
+// ---------------------------------------------------------------- DOM helpers
+const $ = (sel) => document.querySelector(sel);
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+
+// ---------------------------------------------------------------- Scene player
+const Player = {
+  scene: [],
+  idx: 0,
+  onDone: null,
+
+  play(beats, onDone) {
+    this.scene = beats;
+    this.idx = 0;
+    this.onDone = onDone || null;
+    showStage();
+    this.step();
+  },
+
+  step() {
+    if (this.idx >= this.scene.length) { if (this.onDone) this.onDone(); return; }
+    const b = this.scene[this.idx++];
+
+    if (b.bg)   { setBg(b.bg); return this.step(); }
+    if (b.sfx)  { doSfx(b.sfx); return this.step(); }
+    if (b.give) { addBullet(b.give); return this.step(); }
+    if (b.flag) { State.flags[b.flag] = true; save(); return this.step(); }
+    if (b.clearBullets) { State.bullets = []; save(); return this.step(); }
+    if (b.unlock === "freetime") { State.freetimeOpen = true; save(); return this.step(); }
+
+    if (b.go)   { return runScene(b.go); }
+    if (b.investigate) { return runInvestigation(b.investigate, () => this.step()); }
+    if (b.trial)       { return runTrial(b.trial, () => this.step()); }
+    if (b.choices)     { return renderChoices(b.choices); }
+    if (b.end)         { return openHub(); }
+
+    // dialogue / narration
+    renderLine(b);
+  },
+};
+
+function runScene(label) {
+  const beats = STORY[label];
+  if (!beats) { openHub(); return; }
+  Player.play(beats);
+}
+
+// ---------------------------------------------------------------- Rendering
+function renderLine(b) {
+  const stage = $("#stage");
+  const speaking = b.s || null;
+
+  // sprite slot
+  const sp = $("#sprite");
+  if (speaking) { sp.innerHTML = spriteFor(speaking); sp.classList.add("active"); }
+  else { sp.classList.remove("active"); }
+
+  const box = $("#dialogue");
+  const nameTag = $("#nametag");
+  if (b.who) { nameTag.textContent = b.who; nameTag.style.display = "block"; }
+  else { nameTag.style.display = "none"; }
+
+  // accent name tag with speaker color
+  if (speaking && CHARACTERS[speaking]) {
+    nameTag.style.setProperty("--tag", CHARACTERS[speaking].palette.accent);
+  } else if (speaking === "static") {
+    nameTag.style.setProperty("--tag", "#ff2d6f");
+  } else {
+    nameTag.style.setProperty("--tag", "#9fb3c8");
+  }
+
+  const textEl = $("#text");
+  typeText(textEl, b.t || "", () => { $("#advance").style.display = "block"; });
+  $("#advance").style.display = "none";
+  $("#choices").innerHTML = "";
+}
+
+let typing = null;
+function typeText(node, text, done) {
+  if (typing) clearInterval(typing);
+  node.textContent = "";
+  let i = 0;
+  const speed = 16;
+  node.dataset.full = text;
+  typing = setInterval(() => {
+    node.textContent = text.slice(0, ++i);
+    if (i >= text.length) { clearInterval(typing); typing = null; if (done) done(); }
+  }, speed);
+}
+function finishTyping() {
+  const node = $("#text");
+  if (typing) { clearInterval(typing); typing = null; node.textContent = node.dataset.full || node.textContent; $("#advance").style.display = "block"; return true; }
+  return false;
+}
+
+function advance() {
+  if (finishTyping()) return;
+  if ($("#choices").children.length) return; // waiting on a choice
+  Player.step();
+}
+
+function renderChoices(choices) {
+  const wrap = $("#choices");
+  wrap.innerHTML = "";
+  $("#advance").style.display = "none";
+  choices.forEach((c) => {
+    const btn = el("button", "choice-btn", c.t);
+    btn.onclick = () => { wrap.innerHTML = ""; runScene(c.go); };
+    wrap.appendChild(btn);
+  });
+}
+
+// ---------------------------------------------------------------- Backgrounds & SFX
+function setBg(cls) {
+  const bg = $("#bg");
+  bg.className = "bg " + cls;
+}
+function doSfx(kind) {
+  const root = $("#game");
+  root.classList.remove("fx-shake","fx-flash","fx-glitch");
+  void root.offsetWidth;
+  root.classList.add("fx-" + kind);
+  setTimeout(() => root.classList.remove("fx-" + kind), 700);
+}
+
+// ---------------------------------------------------------------- Truth bullets
+function addBullet(b) {
+  if (!State.bullets.find((x) => x.id === b.id)) { State.bullets.push(b); save(); }
+}
+
+// ---------------------------------------------------------------- Investigation
+function runInvestigation(caseId, done) {
+  const data = INVESTIGATIONS[caseId];
+  const stage = $("#stage");
+  stage.style.display = "none";
+  const ov = $("#overlay");
+  ov.style.display = "flex";
+  State.visited[caseId] = State.visited[caseId] || {};
+
+  function render() {
+    const visited = State.visited[caseId];
+    const allDone = data.spots.every((s) => visited[s.id]);
+    ov.innerHTML = `
+      <div class="panel investigate">
+        <h2 class="panel-title">🔍 INVESTIGATION</h2>
+        <p class="panel-sub">${data.title} — ${data.intro}</p>
+        <div class="spot-grid">
+          ${data.spots.map((s) => `
+            <button class="spot ${visited[s.id] ? "done" : ""}" data-spot="${s.id}">
+              <span class="spot-label">${s.label}</span>
+              <span class="spot-state">${visited[s.id] ? "✓ examined" : "examine"}</span>
+            </button>`).join("")}
+        </div>
+        <div class="bullets">
+          <h3>Truth Bullets (${State.bullets.length})</h3>
+          ${State.bullets.length ? State.bullets.map((b)=>`<div class="bullet"><b>${b.name}</b><span>${b.desc}</span></div>`).join("") : '<p class="muted">None yet. Examine the scene.</p>'}
+        </div>
+        <button class="big-btn ${allDone ? "" : "disabled"}" id="toTrial" ${allDone?"":"disabled"}>
+          ${allDone ? "▶ Begin the Class Trial" : "Examine every spot to continue"}
+        </button>
+      </div>`;
+
+    ov.querySelectorAll(".spot").forEach((btn) => {
+      btn.onclick = () => {
+        const spot = data.spots.find((s) => s.id === btn.dataset.spot);
+        showSpot(spot, caseId, render);
+      };
+    });
+    const t = ov.querySelector("#toTrial");
+    if (t && allDone) t.onclick = () => { ov.style.display = "none"; stage.style.display = ""; done(); };
+  }
+  render();
+}
+
+function showSpot(spot, caseId, back) {
+  const ov = $("#overlay");
+  ov.innerHTML = `
+    <div class="panel spot-detail">
+      <h2 class="panel-title">${spot.label}</h2>
+      <p class="spot-body">${spot.body}</p>
+      <div class="bullet got"><span class="got-tag">TRUTH BULLET ACQUIRED</span><b>${spot.bullet.name}</b><span>${spot.bullet.desc}</span></div>
+      <button class="big-btn" id="back">◀ Back to the scene</button>
+    </div>`;
+  State.visited[caseId][spot.id] = true;
+  addBullet(spot.bullet);
+  save();
+  ov.querySelector("#back").onclick = back;
+}
+
+// ---------------------------------------------------------------- Class Trial
+function runTrial(caseId, done) {
+  const data = TRIALS[caseId];
+  const stage = $("#stage");
+  stage.style.display = "none";
+  const ov = $("#overlay");
+  ov.style.display = "flex";
+  let round = 0;
+
+  function renderRound() {
+    if (round >= data.rounds.length) { renderAccuse(); return; }
+    const r = data.rounds[round];
+    ov.innerHTML = `
+      <div class="panel trial">
+        <div class="trial-head"><span class="onair">● ON AIR</span><h2 class="panel-title">CLASS TRIAL</h2><span class="round-num">Debate ${round+1}/${data.rounds.length}</span></div>
+        <p class="trial-prompt">${r.prompt}</p>
+        <p class="panel-sub">Fire a Truth Bullet at the statement that contradicts the evidence.</p>
+        <div class="statements">
+          ${r.statements.map((s,i)=>`<button class="statement ${s.weak?"weak":""}" data-i="${i}">${escapeHtml(s.text)}</button>`).join("")}
+        </div>
+        <div class="ammo">
+          <h3>Your Truth Bullets — pick one, then a statement</h3>
+          <div class="ammo-row">
+            ${State.bullets.map((b)=>`<button class="ammo-btn" data-b="${b.id}" title="${b.desc}">${b.name}</button>`).join("")}
+          </div>
+          <p class="hint">💡 ${r.hint}</p>
+        </div>
+        <div class="trial-msg" id="tmsg"></div>
+      </div>`;
+
+    let chosenBullet = null;
+    ov.querySelectorAll(".ammo-btn").forEach((btn)=>{
+      btn.onclick = () => {
+        ov.querySelectorAll(".ammo-btn").forEach(b=>b.classList.remove("sel"));
+        btn.classList.add("sel"); chosenBullet = btn.dataset.b;
+        $("#tmsg").innerHTML = `<span class="loaded">Loaded: ${btn.textContent}. Now fire at a statement.</span>`;
+      };
+    });
+    ov.querySelectorAll(".statement").forEach((btn)=>{
+      btn.onclick = () => {
+        const s = r.statements[+btn.dataset.i];
+        if (!chosenBullet) { $("#tmsg").innerHTML = `<span class="bad">Load a Truth Bullet first.</span>`; return; }
+        if (s.weak && chosenBullet === s.bullet) {
+          doSfx("flash");
+          btn.classList.add("hit");
+          $("#tmsg").innerHTML = `<span class="good">BREAK!</span> ${escapeHtml(s.success)}`;
+          disableAll();
+          const next = el("button","big-btn","▶ Continue");
+          next.onclick = () => { round++; renderRound(); };
+          $("#tmsg").appendChild(next);
+        } else if (s.weak) {
+          doSfx("shake");
+          $("#tmsg").innerHTML = `<span class="bad">That bullet doesn't pierce it.</span> Right target, wrong evidence. Try another Truth Bullet.`;
+        } else {
+          doSfx("shake");
+          $("#tmsg").innerHTML = `<span class="bad">That statement holds up.</span> Find the one that contradicts the evidence.`;
+        }
+      };
+    });
+    function disableAll(){ ov.querySelectorAll(".statement,.ammo-btn").forEach(b=>b.disabled=true); }
+  }
+
+  function renderAccuse() {
+    const a = data.accuse;
+    ov.innerHTML = `
+      <div class="panel trial">
+        <div class="trial-head"><span class="onair">● ON AIR</span><h2 class="panel-title">THE VERDICT</h2></div>
+        <p class="trial-prompt">${a.prompt}</p>
+        <div class="accuse-grid">
+          ${a.options.map((o,i)=>`<button class="accuse" data-i="${i}">${o.name}</button>`).join("")}
+        </div>
+        <div class="trial-msg" id="tmsg"></div>
+      </div>`;
+    ov.querySelectorAll(".accuse").forEach((btn)=>{
+      btn.onclick = () => {
+        const o = a.options[+btn.dataset.i];
+        if (o.correct) {
+          doSfx("flash"); btn.classList.add("hit");
+          ov.querySelectorAll(".accuse").forEach(b=>b.disabled=true);
+          $("#tmsg").innerHTML = `<span class="good">VERDICT REACHED.</span> ${escapeHtml(a.right)}`;
+          const next = el("button","big-btn","▶ Deliver the verdict");
+          next.onclick = () => { ov.style.display="none"; stage.style.display=""; done(); };
+          $("#tmsg").appendChild(next);
+        } else {
+          doSfx("shake");
+          $("#tmsg").innerHTML = `<span class="bad">${escapeHtml(a.wrong)}</span>`;
+        }
+      };
+    });
+  }
+
+  renderRound();
+}
+
+function escapeHtml(s){ return (s||"").replace(/[&<>"]/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c])); }
+
+// ---------------------------------------------------------------- Free Time Hub
+function openHub() {
+  showOverlayFull();
+  const ov = $("#overlay");
+  const order = ROSTER_ORDER.filter((id) => FREETIME[id]);
+  ov.innerHTML = `
+    <div class="panel hub">
+      <h2 class="panel-title">⏳ FREE TIME</h2>
+      <p class="panel-sub">Spend time with a survivor. Each capstone is the wound, cracked open by love instead of pressure.</p>
+      <p class="hub-progress">Bonds formed: ${order.filter(id=>State.flags["ft_"+id]).length} / ${order.length}</p>
+      <div class="hub-grid">
+        ${order.map((id)=>{
+          const c = CHARACTERS[id];
+          const done = State.flags["ft_"+id];
+          return `<button class="hub-card ${done?"bonded":""}" data-id="${id}">
+            <div class="hub-portrait">${buildPortrait(c)}</div>
+            <div class="hub-name">${c.short} ${done?'<span class="heart">♥</span>':''}</div>
+            <div class="hub-title">${c.title.replace("Ultimate ","")}</div>
+          </button>`;
+        }).join("")}
+      </div>
+      <div class="hub-actions">
+        ${(State.flags.ch1done && !State.flags.ch3done)
+          ? '<button class="big-btn next-case" id="nextCaseBtn">▶ Continue the Broadcast — Ch.3: The Voice</button>' : ''}
+        ${State.flags.ch3done ? '<button class="big-btn" id="outroBtn">🎬 Closing Card</button>' : ''}
+        <button class="big-btn" id="galleryBtn">📁 Cast Gallery</button>
+        <button class="big-btn" id="titleBtn">⌂ Title Screen</button>
+      </div>
+    </div>`;
+  ov.querySelectorAll(".hub-card").forEach((btn)=>{
+    btn.onclick = () => playFreeTime(btn.dataset.id);
+  });
+  const nc = ov.querySelector("#nextCaseBtn");
+  if (nc) nc.onclick = () => runScene("ch3_intro");
+  const ob = ov.querySelector("#outroBtn");
+  if (ob) ob.onclick = () => Player.play(OUTRO);
+  ov.querySelector("#galleryBtn").onclick = openGallery;
+  ov.querySelector("#titleBtn").onclick = showTitle;
+}
+
+function playFreeTime(id) {
+  const c = CHARACTERS[id];
+  const ft = FREETIME[id];
+  showStage();
+  setBg("bg-night");
+  const beats = [
+    { bg:"bg-night" },
+    { s:id, who:c.name, t:`(${c.title})` },
+    { t:`The tell to watch: ${c.tell || "—"}` },
+    ...ft.lines.map((line)=>({ s:id, who:c.name, t:line })),
+    { t:`★ BOND FORMED — Gift received: ${ft.gift}` },
+  ];
+  Player.play(beats, () => {
+    State.flags["ft_"+id] = true; save();
+    openHub();
+  });
+}
+
+// ---------------------------------------------------------------- Cast Gallery
+function openGallery() {
+  showOverlayFull();
+  const ov = $("#overlay");
+  ov.innerHTML = `
+    <div class="panel gallery">
+      <h2 class="panel-title">📁 THE ULTIMATE ROSTER</h2>
+      <p class="panel-sub">Twenty Ultimates, twenty different ways to be broken. Click a file to open it.</p>
+      <div class="gal-grid">
+        ${ROSTER_ORDER.map((id)=>{
+          const c = CHARACTERS[id];
+          return `<button class="gal-card" data-id="${id}">
+            <div class="gal-portrait">${buildPortrait(c)}</div>
+            <div class="gal-name">${c.short}</div>
+            <div class="gal-title">${c.title}</div>
+          </button>`;
+        }).join("")}
+      </div>
+      <button class="big-btn" id="backHub">◀ Back</button>
+    </div>`;
+  ov.querySelectorAll(".gal-card").forEach((btn)=> btn.onclick = () => showProfile(btn.dataset.id));
+  ov.querySelector("#backHub").onclick = () => { if (State.freetimeOpen) openHub(); else showTitle(); };
+}
+
+function showProfile(id) {
+  const c = CHARACTERS[id];
+  const ov = $("#overlay");
+  ov.innerHTML = `
+    <div class="panel profile" style="--accent:${c.palette.accent}">
+      <div class="profile-top">
+        <div class="profile-portrait">${buildPortrait(c)}</div>
+        <div class="profile-info">
+          <h2 class="profile-name">${c.name}</h2>
+          <div class="profile-title">${c.title}</div>
+          <p class="profile-blurb">${c.blurb}</p>
+          <blockquote class="profile-quote">“${c.tagline}”</blockquote>
+          <div class="profile-tell"><b>The tell —</b> ${c.tell || "—"}</div>
+          <div class="profile-status">${State.flags["ft_"+id] ? "♥ Bond formed" : "Bond: not yet"}</div>
+        </div>
+      </div>
+      <button class="big-btn" id="backGal">◀ Back to roster</button>
+    </div>`;
+  ov.querySelector("#backGal").onclick = openGallery;
+}
+
+// ---------------------------------------------------------------- Title
+function showTitle() {
+  $("#stage").style.display = "none";
+  $("#overlay").style.display = "none";
+  $("#title").style.display = "flex";
+  $("#continueBtn").style.display = hasSave() ? "block" : "none";
+}
+
+// ---------------------------------------------------------------- view toggles
+function showStage() {
+  $("#title").style.display = "none";
+  $("#overlay").style.display = "none";
+  $("#stage").style.display = "";
+}
+function showOverlayFull() {
+  $("#title").style.display = "none";
+  $("#stage").style.display = "none";
+  $("#overlay").style.display = "flex";
+}
+
+// ---------------------------------------------------------------- Save/Load
+function save() {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(State)); } catch(e){}
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    Object.assign(State, data);
+    return true;
+  } catch(e){ return false; }
+}
+function hasSave() {
+  try { return !!localStorage.getItem(SAVE_KEY); } catch(e){ return false; }
+}
+
+// ---------------------------------------------------------------- Boot
+function startNew() {
+  State.flags = {}; State.bullets = []; State.freetimeOpen = false; State.visited = {};
+  save();
+  runScene("prologue");
+}
+function continueGame() {
+  load();
+  if (State.freetimeOpen) openHub();
+  else runScene("prologue");
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  $("#newBtn").onclick = startNew;
+  $("#continueBtn").onclick = continueGame;
+  $("#galleryTitleBtn").onclick = openGallery;
+  $("#stage").addEventListener("click", advance);
+  document.addEventListener("keydown", (e) => {
+    if ((e.key === " " || e.key === "Enter") && $("#stage").style.display !== "none") {
+      e.preventDefault(); advance();
+    }
+  });
+  showTitle();
+});

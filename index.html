@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>STATIC — A Killing Game</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="game">
+    <!-- animated background layer -->
+    <div id="bg" class="bg bg-dark"></div>
+    <div id="scanlines"></div>
+
+    <!-- TITLE SCREEN -->
+    <div id="title">
+      <div class="title-inner">
+        <div class="title-logo">
+          <span class="logo-static">STATIC</span>
+          <span class="logo-rec">● REC</span>
+        </div>
+        <div class="title-sub">A KILLING GAME</div>
+        <div class="title-tag">Twenty Ultimates. Twenty wounds. One machine.</div>
+        <div class="title-menu">
+          <button class="big-btn" id="newBtn">▶ New Broadcast</button>
+          <button class="big-btn" id="continueBtn">⟳ Continue</button>
+          <button class="big-btn" id="galleryTitleBtn">📁 Cast Gallery</button>
+        </div>
+        <div class="title-foot">Click or press Space / Enter to advance dialogue.</div>
+      </div>
+    </div>
+
+    <!-- VN STAGE -->
+    <div id="stage" style="display:none">
+      <div id="sprite" class="sprite"></div>
+      <div id="dialogue" class="dialogue">
+        <div id="nametag" class="nametag"></div>
+        <div id="text" class="text"></div>
+        <div id="advance" class="advance">▼</div>
+        <div id="choices" class="choices"></div>
+      </div>
+    </div>
+
+    <!-- FULLSCREEN OVERLAYS (investigation, trial, hub, gallery) -->
+    <div id="overlay" class="overlay" style="display:none"></div>
+  </div>
+
+  <script src="data/characters.js"></script>
+  <script src="js/portraits.js"></script>
+  <script src="js/story.js"></script>
+  <script src="js/casedata.js"></script>
+  <script src="js/engine.js"></script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+// ============================================================================
+//  THE ULTIMATE ROSTER  —  character database
+//  Twenty Ultimates, twenty different ways to be broken. Plus the 21st seat: you.
+// ============================================================================
+
+const CHARACTERS = {
+  protagonist: {
+    id: "protagonist",
+    name: "You",
+    title: "Ultimate ???",
+    short: "You",
+    // palette: skin, hair, hair2(shadow), eyes, outfit, outfit2, accent
+    palette: { skin:"#f1c9a5", hair:"#3a3a44", hair2:"#22222a", eyes:"#7fd4ff", outfit:"#2b2f3a", outfit2:"#1c1f27", accent:"#9fb3c8" },
+    emblem: "?",
+    blurb: "The twenty-first seat. The talent you can't remember — and the one pair of eyes the building wasn't built to fool.",
+    tagline: "I don't know what I'm the Ultimate of. I know I'm going to figure out who did this.",
+  },
+
+  itsuki: {
+    id: "itsuki", name: "Itsuki Endo", title: "Ultimate Voice Actor", short: "Itsuki",
+    palette: { skin:"#f3cdaa", hair:"#5b4a8a", hair2:"#3e3160", eyes:"#b89cff", outfit:"#322b4a", outfit2:"#221d33", accent:"#caa9ff" },
+    emblem: "🎙",
+    blurb: "He can do anyone — your dead grandmother, your ex who finally apologized. Ask for Itsuki and the voice drops flat, because there might be no one home.",
+    tagline: "Tell me what you want me to say. I'll say it better than they ever did.",
+    tell: "He never does impressions of his own parents.",
+  },
+  silas: {
+    id: "silas", name: "Silas Thorne", title: "Ultimate Method Actor", short: "Silas",
+    palette: { skin:"#e8b894", hair:"#2c2620", hair2:"#1a1610", eyes:"#caa85e", outfit:"#4a3b2a", outfit2:"#2e2418", accent:"#d8b87a" },
+    emblem: "🎬",
+    blurb: "A 1940s noir detective in a heatwave. The accent is a coffin he climbed into so he'd never be the kid who lived through the thing he won't name.",
+    tagline: "Kid, in this city, everybody's hiding something. Me? I'm hiding the part where I'm not actually like this.",
+    tell: "Under real fear, the accent slips for half a syllable.",
+  },
+  imogen: {
+    id: "imogen", name: "Imogen Crane", title: "Ultimate ASMRtist", short: "Imogen",
+    palette: { skin:"#f0c4b0", hair:"#7a3f5c", hair2:"#54293e", eyes:"#ff9fc4", outfit:"#3a2030", outfit2:"#26141f", accent:"#ffb6d4" },
+    emblem: "🎧",
+    blurb: "She leans into your ear and whispers the insecurity you never told anyone. She springs the trap first so nobody springs it on her.",
+    tagline: "You're going to leave eventually. I just like to know the exact moment. It's quieter that way.",
+    tell: "She can't take a compliment — warmth makes her change the subject.",
+  },
+  chloe: {
+    id: "chloe", name: "Chloe Carmichael", title: "Ultimate MLM Girlboss", short: "Chloe",
+    palette: { skin:"#f4cfa8", hair:"#d9a441", hair2:"#a87a26", eyes:"#56c6e8", outfit:"#e0b85a", outfit2:"#b08c34", accent:"#fff0c2" },
+    emblem: "📈",
+    blurb: "She'll step over a corpse to ask if you've thought about being your own boss. The scam isn't the hustle — it's the part where she still believes.",
+    tagline: "I'm not asking you to buy anything! I'm asking you to invest in us.",
+    tell: "Alone, she checks an account balance and her whole face falls into the truth.",
+  },
+  jasmine: {
+    id: "jasmine", name: "Jasmine Sterling", title: "Ultimate Pageant Queen", short: "Jasmine",
+    palette: { skin:"#f1c6a0", hair:"#caa24a", hair2:"#9a7830", eyes:"#7be0c0", outfit:"#c0306a", outfit2:"#8a1f49", accent:"#ffd1e2" },
+    emblem: "👑",
+    blurb: "She'll congratulate you, hand on your arm, and slide the knife in without the smile wavering. The woman who cries loses the crown.",
+    tagline: "Oh, I'm so happy for you. Truly. Enjoy it while it lasts.",
+    tell: "She can't stand to be caught mid-blink. Rattle the image, you rattle her.",
+  },
+  sienna: {
+    id: "sienna", name: "Sienna Fox", title: "Ultimate True Crime Podcaster", short: "Sienna",
+    palette: { skin:"#e9bd99", hair:"#8a3030", hair2:"#5e1e1e", eyes:"#ffb05e", outfit:"#3a2424", outfit2:"#241616", accent:"#ff8a5e" },
+    emblem: "🔪",
+    blurb: "The killing game is, frankly, incredible content. She's mid-ad-read while you're still processing a body — until the day it stops being a show.",
+    tagline: "So picture it: the lights go out, and that's when things take a darker turn.",
+    tell: "She records voice memos constantly. The day she stops is the day she's scared.",
+  },
+  leo: {
+    id: "leo", name: "Leo Graves", title: "Ultimate Child Star", short: "Leo",
+    palette: { skin:"#f0c4a0", hair:"#caa860", hair2:"#967c3e", eyes:"#7fd0a0", outfit:"#3a3540", outfit2:"#23202a", accent:"#e6d090" },
+    emblem: "🌟",
+    blurb: "Peaked at nine, finished at eighteen. A shattered porcelain doll doing an impression of broken glass, hoping someone cuts their hand and stays.",
+    tagline: "Aw, you're rooting for me? That's exactly what the network said before they cancelled the show. And me.",
+    tell: "He flinches at applause.",
+  },
+  caleb: {
+    id: "caleb", name: "Caleb \"Crash\" Riley", title: "Ultimate Stuntman", short: "Caleb",
+    palette: { skin:"#e2a878", hair:"#3a2c20", hair2:"#241a12", eyes:"#ff9a4e", outfit:"#a8401f", outfit2:"#742a12", accent:"#ffb060" },
+    emblem: "🔥",
+    blurb: "Sets himself on fire and calls it Tuesday. The grin is real — that's the unsettling part. Quiet hurts him in a way no crash ever has.",
+    tagline: "Nah, see — if it doesn't almost kill me, how do I know I was even there?",
+    tell: "He has a story for every scar — except one, which he covers with his hand.",
+  },
+  sabrina: {
+    id: "sabrina", name: "Sabrina Finch", title: "Ultimate Scammer", short: "Sabrina",
+    palette: { skin:"#eec0a2", hair:"#b06838", hair2:"#824826", eyes:"#7ed957", outfit:"#3a2e22", outfit2:"#241c14", accent:"#ffd27a" },
+    emblem: "🃏",
+    blurb: "The warmest person you've ever met, and not one molecule is safe. She conned herself so long she can't tell if anything she felt was real.",
+    tagline: "I would never lie to you. See — that's the kind of thing I'd say either way.",
+    tell: "When something she says is true, she undercuts it immediately.",
+  },
+  declan: {
+    id: "declan", name: "Declan Cross", title: "Ultimate Mixologist", short: "Declan",
+    palette: { skin:"#d99c70", hair:"#22201e", hair2:"#121110", eyes:"#5ec8c0", outfit:"#1e2a2a", outfit2:"#0f1717", accent:"#6fe0d4" },
+    emblem: "🍸",
+    blurb: "Makes a cocktail that tastes like the moment you ruined your life, served with contempt. He's decided he's poison; distance is the only kindness.",
+    tagline: "You want my recommendation? Drink water and find better company.",
+    tell: "He remembers everyone's order — your coffee, your grief, your silences.",
+  },
+  fiona: {
+    id: "fiona", name: "Fiona Slate", title: "Ultimate Wedding Planner", short: "Fiona",
+    palette: { skin:"#f2cbb0", hair:"#caa0b0", hair2:"#9a7080", eyes:"#a0a0ff", outfit:"#5a4050", outfit2:"#3a2834", accent:"#ffd6e6" },
+    emblem: "💍",
+    blurb: "Orchestrates the happiest day of strangers' lives while privately despising love. The binder is a dam against a flood that's already over the top.",
+    tagline: "We do NOT have time for a feelings detour. Stick to the run-sheet.",
+    tell: "She's never planned her own anything. Mention her future and she goes quiet.",
+  },
+  asher: {
+    id: "asher", name: "Asher Finn", title: "Ultimate Conspiracy Theorist", short: "Asher",
+    palette: { skin:"#e6b48c", hair:"#3a4a3a", hair2:"#243024", eyes:"#9ce86a", outfit:"#3a4030", outfit2:"#23281c", accent:"#b6ff7a" },
+    emblem: "👁",
+    blurb: "The cafeteria menu is a psyop — and also the only person who actually pays attention. Hypervigilance was never paranoia for fun. It was a wound.",
+    tagline: "You think the cameras are off? Nothing's ever off. Hey — you've been counting exits all morning.",
+    tell: "His theories are unhinged. His read on a single heart is dead accurate.",
+  },
+  tanya: {
+    id: "tanya", name: "Tanya \"T-Bone\" Jenkins", title: "Ultimate Competitive Eater", short: "Tanya",
+    palette: { skin:"#caa078", hair:"#2e2420", hair2:"#1a1310", eyes:"#ffd24e", outfit:"#b0402a", outfit2:"#7c2a18", accent:"#ffcf6a" },
+    emblem: "🍖",
+    blurb: "Eats like the food might be taken away — because once, it was. A glorious feral hurricane outrunning a feeling she can't name.",
+    tagline: "Why would I slow down? You slow down, somebody else gets it. That's just facts.",
+    tell: "Throw out a full plate near Tanya and watch something old and frightened flicker.",
+  },
+  rex: {
+    id: "rex", name: "Rex \"The Bastard\" Montgomery", title: "Ultimate Debate Bro", short: "Rex",
+    palette: { skin:"#e3b48f", hair:"#4a3528", hair2:"#2e2018", eyes:"#88aaff", outfit:"#2a3550", outfit2:"#1a2236", accent:"#9fc0ff" },
+    emblem: "⚖",
+    blurb: "Plays devil's advocate at your funeral and calls it intellectual honesty. Being right is the closest he gets to being held.",
+    tagline: "I'm not saying I agree. I'm saying you haven't proven your sadness is rational. Cite your source.",
+    tell: "Beat him cleanly and he doesn't get angry. He gets quiet, almost grateful.",
+  },
+  maeve: {
+    id: "maeve", name: "Maeve Harrow", title: "Ultimate Gossip Columnist", short: "Maeve",
+    palette: { skin:"#edc4a8", hair:"#1e1e24", hair2:"#101014", eyes:"#c08aff", outfit:"#2a2030", outfit2:"#18101e", accent:"#d6a0ff" },
+    emblem: "📰",
+    blurb: "She knows what you did. She carries everyone's secrets like armor, because necessary is the closest thing to loved she's let herself want.",
+    tagline: "I heard something about you, by the way. I'll trade you. I'm always willing to trade.",
+    tell: "Ask her a real question about herself and the silk drops, startled, almost hungry.",
+  },
+  elias: {
+    id: "elias", name: "Elias Croft", title: "Ultimate Pick-Up Artist", short: "Elias",
+    palette: { skin:"#e0ab80", hair:"#3a2e20", hair2:"#241c14", eyes:"#7ec8ff", outfit:"#33384a", outfit2:"#1f222e", accent:"#a0b0c0" },
+    emblem: "🎩",
+    blurb: "A fedora, a 'system,' and a wound the size of a stadium. A scared, lonely boy who learned the exact wrong lesson and built an identity on it.",
+    tagline: "I'm not like other guys, okay? I have frameworks. Why isn't this working—",
+    tell: "Catch him off-script and a real, undefended kid looks out for one second.",
+  },
+  nyx: {
+    id: "nyx", name: "Nyx Valerius", title: "Ultimate Mortician", short: "Nyx",
+    palette: { skin:"#dcd0d8", hair:"#1a1820", hair2:"#0e0c12", eyes:"#a0e0d0", outfit:"#26222e", outfit2:"#15121b", accent:"#8fe0cc" },
+    emblem: "⚰",
+    blurb: "Wonderful with the dead, useless with the living — the dead don't leave. She's trying to learn to love you while you're still warm.",
+    tagline: "You have lovely bone structure. I mean that as a compliment and, eventually, professionally.",
+    tell: "Composed around corpses, anxious around the healthy. Comfort registers as threat.",
+  },
+  rowan: {
+    id: "rowan", name: "Rowan \"Riot\" Price", title: "Ultimate Mall Goth", short: "Rowan",
+    palette: { skin:"#d8c4c0", hair:"#161318", hair2:"#0b0a0d", eyes:"#b06adf", outfit:"#1c1620", outfit2:"#0e0a12", accent:"#a050d0" },
+    emblem: "🦇",
+    blurb: "Society is a prison and it's basically still 2006. The twist: no trauma under there. A wound they never received — and the shame of that.",
+    tagline: "You wouldn't get it. My pain is, like… existential. No, nothing happened. Stop asking what happened.",
+    tell: "They light cloves they never actually smoke.",
+  },
+  kieran: {
+    id: "kieran", name: "Kieran Holt", title: "Ultimate Barista", short: "Kieran",
+    palette: { skin:"#e6b88f", hair:"#4a3322", hair2:"#2e2014", eyes:"#b8884e", outfit:"#3a2a1e", outfit2:"#241910", accent:"#caa070" },
+    emblem: "☕",
+    blurb: "Judges your order to your face and your soul behind your back. The contempt for your latte is overflow from the contempt he aims at himself.",
+    tagline: "You ordered it with caramel? It's fine. We just have very different relationships with our own potential.",
+    tell: "Insult coffee and he's playful. Insult him and watch how fast the wit curdles.",
+  },
+  noboru: {
+    id: "noboru", name: "Noboru Abe", title: "Ultimate Beekeeper", short: "Noboru",
+    palette: { skin:"#e8c094", hair:"#241e16", hair2:"#14100a", eyes:"#e0b040", outfit:"#5a4a24", outfit2:"#3a2f16", accent:"#f0c850" },
+    emblem: "🐝",
+    blurb: "Patient the way a held breath is patient. Raised where the self dissolved into the unit, loved as a function, never as a name.",
+    tagline: "A single bee means nothing. I was raised to find that comforting. I'm still deciding if it is.",
+    tell: "He never gets stung by accident. The day he lets a bee sting him is a confession.",
+  },
+};
+
+// Display order used by the gallery / killing-game roster.
+const ROSTER_ORDER = [
+  "itsuki","silas","imogen","chloe","jasmine","sienna","leo","caleb","sabrina","declan",
+  "fiona","asher","tanya","rex","maeve","elias","nyx","rowan","kieran","noboru",
+];
+
+if (typeof module !== "undefined") module.exports = { CHARACTERS, ROSTER_ORDER };
