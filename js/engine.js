@@ -119,7 +119,10 @@ function renderLine(b) {
   }
 
   const textEl = $("#text");
-  typeText(textEl, b.t || "", () => { $("#advance").style.display = "block"; });
+  const t = b.t || "";
+  const isCard = /^(EXECUTION:|CHAPTER \d|THE END\.|★ BOND FORMED)/.test(t) || /COMPLETE\.?$/.test(t);
+  textEl.classList.toggle("card-text", isCard);
+  typeText(textEl, t, () => { $("#advance").style.display = "block"; });
   $("#advance").style.display = "none";
   $("#choices").innerHTML = "";
 }
@@ -336,6 +339,7 @@ function escapeHtml(s){ return (s||"").replace(/[&<>"]/g, c=>({ "&":"&amp;","<":
 // Chapter 1 begins from a New Broadcast; chapters 2-6 unlock in sequence
 // from the Free Time hub as each prior chapter completes.
 const CHAPTER_FLOW = [
+  { need:"prologueDone", done:"ch1done", scene:"daily1", label:"Ch.1: Last Call" },
   { need:"ch1done", done:"ch2done", scene:"ch2_intro", label:"Ch.2: What She Knew" },
   { need:"ch2done", done:"ch3done", scene:"ch3_intro", label:"Ch.3: The Voice" },
   { need:"ch3done", done:"ch4done", scene:"ch4_intro", label:"Ch.4: Partners" },
@@ -365,10 +369,14 @@ function openHub() {
         ${order.map((id)=>{
           const c = CHARACTERS[id];
           const done = State.flags["ft_"+id];
-          return `<button class="hub-card ${done?"bonded":""}" data-id="${id}">
-            <div class="hub-portrait">${buildPortrait(c)}</div>
-            <div class="hub-name">${c.short} ${done?'<span class="heart">♥</span>':''}</div>
-            <div class="hub-title">${c.title.replace("Ultimate ","")}</div>
+          const dead = isDeceased(id);
+          const locked = dead && !done;
+          const cls = [ done?"bonded":"", dead?"deceased":"", locked?"locked":"" ].join(" ");
+          const mark = done ? '<span class="heart">♥</span>' : (locked ? '<span class="cross">✝</span>' : '');
+          return `<button class="hub-card ${cls}" data-id="${id}" ${locked?"disabled":""} title="${locked?"This bond is lost — they're gone.":c.title}">
+            <div class="hub-portrait">${buildPortrait(c)}${dead?'<span class="dead-x">✕</span>':''}</div>
+            <div class="hub-name">${c.short} ${mark}</div>
+            <div class="hub-title">${locked?"— lost —":c.title.replace("Ultimate ","")}</div>
           </button>`;
         }).join("")}
       </div>
@@ -390,17 +398,24 @@ function openHub() {
   ov.querySelector("#titleBtn").onclick = showTitle;
 }
 
+function isDeceased(id) {
+  const f = FATES[id];
+  return !!(f && State.flags[f.flag]);
+}
+
 function playFreeTime(id) {
+  if (isDeceased(id) && !State.flags["ft_"+id]) return; // can't bond with the dead
   const c = CHARACTERS[id];
   const ft = FREETIME[id];
   showStage();
   setBg("bg-night");
+  const events = ft.events || [];
   const beats = [
     { bg:"bg-night" },
-    { s:id, who:c.name, t:`(${c.title})` },
-    { t:`The tell to watch: ${c.tell || "—"}` },
-    ...ft.lines.map((line)=>({ s:id, who:c.name, t:line })),
-    { t:`★ BOND FORMED — Gift received: ${ft.gift}` },
+    { s:id, who:c.name, t:`${c.title}. The tell to watch: ${c.tell || "—"}` },
+    ...events.map((line)=>({ s:id, t:line })),
+    ...ft.lines.map((line)=>({ s:id, t:line })),
+    { s:id, t:`★ BOND FORMED — Gift received: ${ft.gift}` },
   ];
   Player.play(beats, () => {
     State.flags["ft_"+id] = true; save();
@@ -419,9 +434,10 @@ function openGallery() {
       <div class="gal-grid">
         ${ROSTER_ORDER.map((id)=>{
           const c = CHARACTERS[id];
-          return `<button class="gal-card" data-id="${id}">
-            <div class="gal-portrait">${buildPortrait(c)}</div>
-            <div class="gal-name">${c.short}</div>
+          const dead = isDeceased(id);
+          return `<button class="gal-card ${dead?"deceased":""}" data-id="${id}">
+            <div class="gal-portrait">${buildPortrait(c)}${dead?'<span class="dead-x">✕</span>':''}</div>
+            <div class="gal-name">${c.short}${State.flags["ft_"+id]?' <span class="heart">♥</span>':''}</div>
             <div class="gal-title">${c.title}</div>
           </button>`;
         }).join("")}
@@ -430,6 +446,14 @@ function openGallery() {
     </div>`;
   ov.querySelectorAll(".gal-card").forEach((btn)=> btn.onclick = () => showProfile(btn.dataset.id));
   ov.querySelector("#backHub").onclick = () => { if (State.freetimeOpen) openHub(); else showTitle(); };
+}
+
+function fateLine(id) {
+  if (!isDeceased(id)) return "";
+  const f = FATES[id];
+  const label = f.role === "Mastermind" ? `Unmasked in Chapter ${f.ch} — the Mastermind`
+    : `Deceased — Chapter ${f.ch} ${f.role}`;
+  return `<div class="profile-fate">✝ ${label}</div>`;
 }
 
 function showProfile(id) {
@@ -445,7 +469,8 @@ function showProfile(id) {
           <p class="profile-blurb">${c.blurb}</p>
           <blockquote class="profile-quote">“${c.tagline}”</blockquote>
           <div class="profile-tell"><b>The tell —</b> ${c.tell || "—"}</div>
-          <div class="profile-status">${State.flags["ft_"+id] ? "♥ Bond formed" : "Bond: not yet"}</div>
+          ${fateLine(id)}
+          <div class="profile-status">${State.flags["ft_"+id] ? "♥ Bond formed" : (isDeceased(id) ? "Bond: lost" : "Bond: not yet")}</div>
         </div>
       </div>
       <button class="big-btn" id="backGal">◀ Back to roster</button>

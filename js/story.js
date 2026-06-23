@@ -61,7 +61,10 @@ const STORY = {
     { t:"You'll learn the rest of them soon enough. STATIC is in no hurry. STATIC, you're starting to understand, enjoys the waiting most of all." },
     { s:"static", who:"STATIC", t:"Settle in, cast! Get to know each other. The chemistry is EVERYTHING. Dead air is the only thing I can't forgive." },
     { t:"You can review the full roster any time from the cast gallery. For now, the studio settles into an uneasy quiet." },
-    { go:"daily1" },
+    { t:"FREE TIME. Before anything happens, there's still time to get to know them — all of them, while they're all still here. Choose carefully. Some chances don't come twice." },
+    { flag:"prologueDone" },
+    { unlock:"freetime" },
+    { end:true },
   ],
 
   // -------------------------------------------------------------- DAILY LIFE / MOTIVE

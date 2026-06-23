@@ -502,110 +502,251 @@ const TRIALS = {
   },
 };
 
-// ---- Free Time capstone events (the payoff of each route) --------------------
-// Each is the moment that rhymes, exactly, with the murder motive it could
-// have been. Completing one grants a "report card" entry.
+// ---- Free Time: full six-event chains ---------------------------------------
+// events[0..4] are the build-up — (1) meet the mask, (2) catch a crack,
+// (3) ask for the real thing & they recoil, (4) the wound explained sideways,
+// (5) you stay anyway — and `lines` is the capstone payoff: the mask drops on
+// purpose, once, and they hand you the wound itself. Each capstone rhymes
+// exactly with the murder it could have been.
 const FREETIME = {
-  itsuki: { who:"Itsuki Endo", lines:[
+  itsuki: { who:"Itsuki Endo", events:[
+    "He does a bit the entire time, never himself — a dozen beloved voices, none his own. You laugh; he glows.",
+    "You catch him alone, not performing, staring at nothing — and the face isn't sad, it's blank. He startles when you say his name, like he forgot it was his.",
+    "You ask him to be himself for one minute. He tries. It's the worst minute of his life — long silence, no jokes, visible terror — and he bolts.",
+    "Later, in a borrowed gentle voice, he explains: his house only got quiet when he was someone else. Somewhere in there, the someone-elses ate the original.",
+    "You tell him the blank room is fine — you didn't come for the characters. He stops performing for ten whole seconds, lets you see the nothing, and you don't leave.",
+  ], lines:[
     "He does one last voice — yours, perfectly, gently — then drops it.",
     "\"That was me. Just then. Asking you to stay.\" Flat, unrehearsed, nothing like the others.",
     "He hands you a voice memo: him reading something in his own voice. The only recording of the real one that exists.",
   ], gift:"A voice memo of Itsuki, as himself." },
-  silas: { who:"Silas Thorne", lines:[
+  silas: { who:"Silas Thorne", events:[
+    "He narrates your whole conversation in voiceover, calls the cafeteria 'a joint where the coffee's as bitter as a dame's goodbye.' Insufferable. Also, somehow, charming.",
+    "At 3 a.m. you catch the accent slip for half a syllable over something that scared him, then snap back into the coat.",
+    "You ask to meet the man under the trench coat. He tips an imaginary hat and changes the subject so smoothly you almost miss the panic.",
+    "In character, he tells you a 'case' about a kid who lived through something the detective is too tough to cry about. You both know it isn't fiction.",
+    "You stop trying to make him drop the voice and just sit with the kid inside it — and for once he doesn't narrate the silence.",
+  ], lines:[
     "You say his real name — not the detective's — and ask for one true thing without the voice.",
     "He gives you the annotated script of the role he's been hiding inside, in his real handwriting.",
     "He tells you one flat sentence about what happened. Then immediately tries to take it back.",
   ], gift:"The annotated script, in Silas's real hand." },
-  imogen: { who:"Imogen Crane", lines:[
+  imogen: { who:"Imogen Crane", events:[
+    "She leans into your ear and whispers the exact insecurity you've never told anyone, velvet-soft, and watches you flinch.",
+    "You catch her flinch first, the one time you say something kind — warmth lands on her like a raised hand.",
+    "You ask to just talk: no whispers, no weaponized closeness. She recoils, says you'll leave on a schedule she'd rather set herself.",
+    "Barely above a breath, she explains she springs the trap first so nobody springs it on her — starving to be held and terrified of the wanting.",
+    "You let her say the cruelest true thing she has, and you don't recoil. You stay inside the discomfort until it has nowhere left to go but real.",
+  ], lines:[
     "You let her whisper the cruelest true thing she has, and you only say: \"I know. I'm staying.\"",
     "She records you a track that isn't an insult, for once — your name, said gently, on a loop.",
     "It's the most naked thing she's ever made.",
   ], gift:"A track of your name, said kindly." },
-  chloe: { who:"Chloe Carmichael", lines:[
+  chloe: { who:"Chloe Carmichael", events:[
+    "Within a minute she's pitched you on being your own boss; every sentence is a warm lead and a closing line.",
+    "Alone, thinking no one's watching, she checks an account balance and her whole face falls into the truth for exactly one second.",
+    "You offer to just hang out — no business, no upline, no ask. She keeps waiting for the pitch, visibly thrown that there isn't one.",
+    "In MLM-speak that keeps slipping, she admits the dream took her savings and her family and gave back a garage of lavender oil — and she still believes, because the alternative is unbearable.",
+    "You give her something with no strings and watch her wait for the catch that never comes, and you stay until she stops waiting.",
+  ], lines:[
     "You give her a gift with no pitch, no ask, no catch — and watch her wait a full ten seconds for the other shoe.",
     "It never drops. She tears up the downline sheet with your name on it.",
     "\"I don't want you in the business. I just want you.\"",
   ], gift:"A torn-up downline sheet." },
-  jasmine: { who:"Jasmine Sterling", lines:[
+  jasmine: { who:"Jasmine Sterling", events:[
+    "Flawless, gracious, lethal eye contact — she congratulates you with a knife somewhere in the sentence.",
+    "You catch her mid-blink, image uncontrolled, and watch her scramble to recompose like you'd seen something obscene.",
+    "You ask her to drop the crown for one conversation. She smiles and says vulnerability is a disqualification — she's never decided otherwise.",
+    "Smile intact, she tells you what it costs to be this: the diet, the heels that draw blood, the woman who cries loses.",
+    "You stay through the uncontrolled version — the laugh she didn't pose for — and don't reach for a crown or a camera.",
+  ], lines:[
     "She lets you photograph her mid-laugh — ugly, uncontrolled — and doesn't ask to delete it.",
     "Then she pries a rhinestone off the crown and presses it into your hand.",
     "\"The only thing I've ever given away on purpose.\"",
   ], gift:"A single rhinestone from the crown." },
-  sienna: { who:"Sienna Fox", lines:[
+  sienna: { who:"Sienna Fox", events:[
+    "She narrates your hangout like an episode, mid-ad-read in her own head, armchair-diagnosing the cast between sips.",
+    "You notice the day she didn't reach for the recorder — and how scared that quiet made her.",
+    "You ask for her, not the show — no hook, no monetization. She doesn't have a segment for that and panics a little.",
+    "She admits she's marinated in murder so long it stopped meaning anything, and she's not sure she can still feel a real one.",
+    "You stay through the silence where the narration should be, and she lets you.",
+  ], lines:[
     "She puts the phone down. Actually stops recording.",
     "She tells you a story with no episode, no hook, no monetization.",
     "Just because it's true, and it's yours.",
   ], gift:"An off-the-record story." },
-  leo: { who:"Leo Graves", lines:[
+  leo: { who:"Leo Graves", events:[
+    "Venom and charm, industry secrets and a cigarette, the jagged-glass burnout doing his best bit.",
+    "You clock him flinch at applause — the one thing he was built for, and the one that hurts most.",
+    "You ask for the kid behind the child star. He tests you with cruelty, because cruelty's honest and applause never was.",
+    "Almost lightly, he tells you millions loved a character with his face and nobody ever loved Leo — and he's not sure there's a difference.",
+    "You stay through the cruelty without flinching, and he runs out of glass to throw.",
+  ], lines:[
     "The cameras-off version, finally. He tells you his real favorite movie — not the studio answer.",
     "He flinches when you applaud.",
     "Then he lets you applaud anyway.",
   ], gift:"His real favorite — and permission to clap." },
-  caleb: { who:"Caleb \"Crash\" Riley", lines:[
+  caleb: { who:"Caleb \"Crash\" Riley", events:[
+    "He sets himself on fire and calls it Tuesday, grins through a broken collarbone, joy you can't find the bottom of.",
+    "You ask about a scar and get a hilarious story for every one — except the one he covers with his hand.",
+    "You ask him to just sit, quiet, no stunt. The stillness frightens him more than any crash; he reaches for an exit.",
+    "He admits the quiet 3 a.m. stuff has no airbag — a crash you can brace for, the silence you can't.",
+    "You stay in the quiet room with him until sitting still stops feeling like dying.",
+  ], lines:[
     "He sits with you in a quiet room and doesn't reach for his pulse, doesn't need the rush.",
     "He admits, terrified, that stillness with you doesn't feel like dying for once.",
     "He gives you the helmet from his first stunt — the one he survived when he didn't expect to.",
   ], gift:"The helmet from his first stunt." },
-  sabrina: { who:"Sabrina Finch", lines:[
+  sabrina: { who:"Sabrina Finch", events:[
+    "By Tuesday she knows your love language; by Thursday it's a tool, and you thank her for the privilege.",
+    "The one time she says something true, she gets uncomfortable and undercuts it immediately — the truth is the only thing that scares her.",
+    "You ask whether anything she's said is real. She asks it back, and you realize she genuinely doesn't know.",
+    "Charming as ever, she confesses she ran the grift on herself so long she can't tell a real feeling from an angle she forgot she was playing.",
+    "You stay even knowing every word might be a con, and she can't find your angle because there isn't one.",
+  ], lines:[
     "She tells you one thing that's true and lets it stand — doesn't undercut it.",
     "It costs her more than any con ever did.",
     "Then she hands back your wallet with everything still in it. \"First time I've ever given something back.\"",
   ], gift:"Your wallet — everything still in it." },
-  declan: { who:"Declan Cross", lines:[
+  declan: { who:"Declan Cross", events:[
+    "He makes you something perfect, insults your taste, and tells you to find better company — already grieving you.",
+    "He remembers your order, your coffee, your silences — the misanthrope who claims not to care, cataloguing everything.",
+    "You keep coming back to the bar he's sure will be empty. He tells you, hostile, that he's poison and you should run.",
+    "Contemptuous, he explains the only kind thing a poison can do is keep its distance — he's decided he's lethal in the bedrock.",
+    "You keep drinking what he pours and keep not dying, keep showing up, until the certainty starts to crack.",
+  ], lines:[
     "He makes you a drink with nothing hidden in it. Just good, and kind.",
     "He watches you drink it, braced for proof that he's lethal — and you're fine.",
     "He gives you the recipe in his own hand. \"It's the only one I make that won't ruin you.\"",
   ], gift:"A recipe that won't ruin you." },
-  fiona: { who:"Fiona Slate", lines:[
+  fiona: { who:"Fiona Slate", events:[
+    "She runs your hangout off a run-sheet, screams a caterer into dust, controls every variable with white knuckles.",
+    "You mention her own future and the binder-clutching control freak goes very, very quiet.",
+    "You ask her to do one unplanned thing with you. She refuses — feelings are scheduled for after the photographer leaves.",
+    "She admits the binder is a dam against a flood that's already over the top: other people's vows are easy; hers are the problem.",
+    "You stay through one unscheduled, unruined, unplanned afternoon and watch her survive not knowing what's next.",
+  ], lines:[
     "She throws out the run-sheet for one unplanned day with you and white-knuckles through not knowing what's next.",
     "Then she tears a blank page from her binder.",
     "\"This part. The part I can't plan. It's yours.\"",
   ], gift:"A blank page from the binder." },
-  asher: { who:"Asher Finn", lines:[
+  asher: { who:"Asher Finn", events:[
+    "The cafeteria menu is a psyop, the cameras are never off — and he's also the only one who noticed you didn't sleep.",
+    "His theories about the world are unhinged; his read on your single human heart is dead accurate, and it scares him too.",
+    "You ask him to trust you. Being trusted is harder for him than being watched; he flinches from it.",
+    "Sweating, he explains hypervigilance was never paranoia for fun — it was a wound that taught him to watch everything or get blindsided.",
+    "His terror of being watched flips, slowly, into the unbearable gift of being seen, and he lets you.",
+  ], lines:[
     "He tells you about the real thing — the original betrayal that taught him to watch everything.",
     "He trusts you with the one secret he never turned into a theory.",
     "He shows you the notebook where, between the conspiracies, he's been tracking only the days you seemed okay.",
   ], gift:"The notebook of your good days." },
-  tanya: { who:"Tanya \"T-Bone\" Jenkins", lines:[
+  tanya: { who:"Tanya \"T-Bone\" Jenkins", events:[
+    "Forty hot dogs, sauce to the elbow, a glorious feral hurricane who devours your company whole.",
+    "You throw out a full plate near her and watch something old and frightened flicker across her face.",
+    "You ask her to slow down — one bite, savored. It terrifies her; you slow down, somebody else gets it.",
+    "She admits scarcity is the only certainty she's known: you consume now, fast, before the world changes its mind.",
+    "You stay while she lets one good thing last instead of inhaling it, and she starts to trust it'll be there tomorrow.",
+  ], lines:[
     "She eats one bite slowly. Lets it last. Lets you last.",
     "She admits she's been afraid the whole time that good things get taken.",
     "Then she pushes half her food across the table — the most sacred thing she owns.",
   ], gift:"Half her plate." },
-  rex: { who:"Rex Montgomery", lines:[
+  rex: { who:"Rex Montgomery", events:[
+    "He plays devil's advocate at everything, reframes your feelings as fallacies, and wins, relentlessly.",
+    "You beat him cleanly once and, instead of anger, something almost grateful crosses his face.",
+    "You refuse to debate him. He doesn't know what to do with affection that isn't a rebuttal.",
+    "Between technicalities, he admits being right is the closest he's ever gotten to being held.",
+    "You keep feeling at him instead of arguing, steadily, until the fortress meets the one weapon it can't counter.",
+  ], lines:[
     "You out-argue him — clean, no bait — and instead of anger, the quiet, grateful thing crosses his face.",
     "He concedes a point for the first time in his life.",
     "He offers you his hand, with no rebuttal prepared.",
   ], gift:"A conceded point, and a handshake." },
-  maeve: { who:"Maeve Harrow", lines:[
+  maeve: { who:"Maeve Harrow", events:[
+    "She offers to trade you a secret for a secret, silk-voiced, always transacting, never just talking.",
+    "You ask her a real question about herself and the silk drops for a second into something startled, almost hungry.",
+    "You ask again, wanting her and not the dirt. It's the one currency she doesn't know how to accept.",
+    "She admits she's sure the unvarnished Maeve — no leverage, just a person — would bore you into leaving inside a week.",
+    "You wait out the silence until she answers, and discover the un-dirt Maeve isn't boring at all.",
+  ], lines:[
     "You ask her a real question about herself and wait out the silence until she answers.",
     "The un-dirt Maeve isn't boring at all.",
     "She hands over a secret she's never traded — her own — and asks for nothing back.",
   ], gift:"Her own secret, freely given." },
-  elias: { who:"Elias Croft", lines:[
+  elias: { who:"Elias Croft", events:[
+    "He negs you, name-drops his 'frameworks,' and panics the second the script doesn't land.",
+    "You catch him fully off-script and a real, undefended kid looks out through the bravado for one second.",
+    "You refuse to play the game his scripts are built for. Relating to a person as a person is unbearable to him.",
+    "Voice cracking, he admits he was rejected so hard, so young, that he decided the only safety was treating people like locks to pick.",
+    "You stay for the collapse instead of mocking it, plate by pathetic plate, until the loneliness underneath comes out.",
+  ], lines:[
     "You catch him fully off-script, every move failing — and instead of mocking the collapse, you stay for the kid underneath.",
     "He takes the fedora off and sets it down.",
     "\"I don't think I need the bit with you.\"",
   ], gift:"The fedora, set down." },
-  nyx: { who:"Nyx Valerius", lines:[
+  nyx: { who:"Nyx Valerius", events:[
+    "She compliments your bone structure, sizes you for a casket without unkindness, warmer with the dead than the living.",
+    "You offer a warm hand and watch her flinch — comfort registers as threat.",
+    "You ask her to care for you while you're still alive. The risk that you could leave under your own power terrifies her.",
+    "Flatly, she explains she loves the way you love a body — completely, once it's safely past the point of abandoning her.",
+    "You keep choosing to stay vertical and stay anyway, again and again, until the risk stops feeling unsurvivable.",
+  ], lines:[
     "She lets herself care for you while you're warm, tolerating the unbearable risk that you could leave under your own power.",
     "You keep choosing to stay vertical, and stay anyway.",
     "She doesn't measure you for anything. \"I want you alive. That's new for me.\"",
   ], gift:"Not being measured for a casket." },
-  rowan: { who:"Rowan \"Riot\" Price", lines:[
+  rowan: { who:"Rowan \"Riot\" Price", events:[
+    "Society is a prison, it's basically still 2006, and they are the ultimate reject — clove smoke and a rented sneer.",
+    "You notice they light cloves they never actually smoke; the whole aesthetic is a costume, and somewhere they know it.",
+    "You ask what actually happened. Nothing did — loving parents, fine life — and the shame of having no excuse is unbearable.",
+    "They admit the real wound: given everything and still empty, with no tragic backstory to hang it on.",
+    "You call the bluff so gently it stops being a bluff, with actual affection, and stay.",
+  ], lines:[
     "You call the bluff so gently it stops being a bluff.",
     "Rowan admits the unbearable thing: the life is fine, they're sad anyway, there's no story to blame.",
     "They finally actually light a clove and share it, the costume cracking into something real.",
   ], gift:"A shared clove, for real this time." },
-  kieran: { who:"Kieran Holt", lines:[
+  kieran: { who:"Kieran Holt", events:[
+    "He judges your order to your face and your soul behind your back, all roast profiles and contempt.",
+    "Insult coffee in general and he's playful; insult him and you watch how fast the wit curdles.",
+    "You ask about him off the clock and the snob has nothing to hide behind; he deflects to single-origin trivia.",
+    "He admits coffee is the one altar where he gets to be a god — strip it away and he's sure he's mediocre at being a person.",
+    "You make him feel worth something away from the counter, and he lets the snobbery go for one evening.",
+  ], lines:[
     "Away from the bar, you make him feel worth something with no espresso to hide behind.",
     "He lets the snobbery go for one evening.",
     "He makes you a coffee with no lecture, no judgment — just the best thing he knows how to make, handed over plainly.",
   ], gift:"A coffee with no lecture." },
-  noboru: { who:"Noboru Abe", lines:[
+  noboru: { who:"Noboru Abe", events:[
+    "He talks soft and sweet about the colony — the hive as one body, the workers who love the queen, belonging as a function.",
+    "You notice he never gets stung by accident — the bees and he have an understanding he doesn't extend to people.",
+    "You ask to know Noboru, not the hive. Being wanted as a person, not a role, is a language he was never taught.",
+    "He explains he was raised somewhere that ran like a hive, where the self dissolved and he was loved as a function, never a name.",
+    "You keep choosing him specifically, by name, until the homesick fear of it starts to ease.",
+  ], lines:[
     "He chooses you — as Noboru, as a person, not a role in any hive — which no one ever did.",
     "He lets a bee land on your open palm and tells you it won't sting.",
     "He means: you're safe with me, in the only language he trusts.",
   ], gift:"A bee on your open palm, and trust." },
 };
 
-if (typeof module !== "undefined") module.exports = { INVESTIGATIONS, TRIALS, FREETIME };
+// ---- Fates: who dies in which chapter, gated by the chapter's done-flag ------
+// Used to mark deceased cast in the gallery/hub and to lock new bonds once a
+// character is gone — bond before their chapter, or lose the chance.
+const FATES = {
+  tanya:   { flag:"ch1done", ch:"1", role:"Victim" },
+  declan:  { flag:"ch1done", ch:"1", role:"Blackened" },
+  maeve:   { flag:"ch2done", ch:"2", role:"Victim" },
+  jasmine: { flag:"ch2done", ch:"2", role:"Blackened" },
+  rex:     { flag:"ch3done", ch:"3", role:"Victim" },
+  itsuki:  { flag:"ch3done", ch:"3", role:"Blackened" },
+  kieran:  { flag:"ch4done", ch:"4", role:"Victim" },
+  chloe:   { flag:"ch4done", ch:"4", role:"Blackened" },
+  elias:   { flag:"ch4done", ch:"4", role:"Blackened" },
+  asher:   { flag:"ch5done", ch:"5", role:"Victim" },
+  nyx:     { flag:"ch5done", ch:"5", role:"Blackened" },
+  sienna:  { flag:"ch6done", ch:"6", role:"Mastermind" },
+};
+
+if (typeof module !== "undefined") module.exports = { INVESTIGATIONS, TRIALS, FREETIME, FATES };

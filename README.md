@@ -34,8 +34,16 @@ Click or press **Space / Enter** to advance dialogue.
   4. **"Partners"** — Kieran / Chloe + Elias. Two culprits, two conflicting stories, one partnership that was never a partnership.
   5. **"Time of Death"** — Asher / Nyx. The case where the murderer controls the forensic evidence, and you have to believe the body over the coroner.
   6. **"The Last Episode"** — the mastermind unmasking. Not a murder to solve, but the season itself: who's been holding the pen, and whether the narrator can finally feel one of them.
-- **Free Time hub** — a six-event arc's capstone for every survivor: the mask drops
-  on purpose, once, and they hand you the wound itself. Bonds are tracked and saved.
+- **Free Time hub** — a full **six-event chain** for all 20 routes: meet the mask →
+  catch a crack → ask for the real thing (they recoil) → the wound explained sideways →
+  you stay anyway → the capstone, where the mask drops on purpose and they hand you the
+  wound itself. The first hub opens *before* the first murder, so every route — including
+  Chapter 1's victims — is reachable; bond before a character's chapter or lose the
+  chance. Bonds are tracked and saved.
+- **Deceased / fate state** — once a chapter completes, its victim and blackened are
+  marked across the gallery and hub (grayed sprite, red ✕), their profiles show their
+  fate (chapter + role), and unbonded dead routes lock. The mastermind is marked
+  "Unmasked" rather than deceased.
 
 ## Project layout
 

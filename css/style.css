@@ -203,6 +203,25 @@ html,body{ margin:0; height:100%; background:#000; overflow:hidden;
 .profile-tell b{ color:var(--gold); }
 .profile-status{ margin-top:10px; font-weight:bold; color:var(--pink); }
 
+/* ---------- deceased / fate markers ---------- */
+.hub-portrait, .gal-portrait{ position:relative; }
+.dead-x{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-size:5rem; font-weight:900; color:var(--pink); opacity:.85; pointer-events:none;
+  text-shadow:0 0 14px rgba(255,45,111,.7); }
+.hub-card.deceased .hub-portrait, .gal-card.deceased .gal-portrait,
+.hub-card.deceased .hub-name, .gal-card.deceased .gal-name{ filter:grayscale(1) brightness(.6); }
+.hub-card.locked{ opacity:.55; cursor:not-allowed; border-color:#3a2a32; }
+.hub-card.locked:hover{ transform:none; box-shadow:none; }
+.hub-card .cross{ color:var(--pink); }
+.profile-fate{ margin:8px 0; color:var(--pink); font-weight:bold; letter-spacing:.04em;
+  border:1px solid var(--pink); display:inline-block; padding:4px 12px; border-radius:4px;
+  background:rgba(255,45,111,.08); }
+
+/* ---------- dramatic card-text (chapter cards, executions, bonds) ---------- */
+.text.card-text{ text-align:center; font-weight:900; letter-spacing:.08em;
+  font-size:clamp(1.2rem,3vw,1.7rem); text-shadow:3px 3px 0 var(--pink-dim);
+  text-transform:uppercase; padding:10px 0; }
+
 /* ---------- screen FX ---------- */
 .fx-shake{ animation:shake .6s; }
 .fx-flash::after{ content:""; position:absolute; inset:0; z-index:60; background:var(--pink);
