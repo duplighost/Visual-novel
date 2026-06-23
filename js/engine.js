@@ -332,6 +332,25 @@ function runTrial(caseId, done) {
 
 function escapeHtml(s){ return (s||"").replace(/[&<>"]/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c])); }
 
+// ---------------------------------------------------------------- Chapter flow
+// Chapter 1 begins from a New Broadcast; chapters 2-6 unlock in sequence
+// from the Free Time hub as each prior chapter completes.
+const CHAPTER_FLOW = [
+  { need:"ch1done", done:"ch2done", scene:"ch2_intro", label:"Ch.2: What She Knew" },
+  { need:"ch2done", done:"ch3done", scene:"ch3_intro", label:"Ch.3: The Voice" },
+  { need:"ch3done", done:"ch4done", scene:"ch4_intro", label:"Ch.4: Partners" },
+  { need:"ch4done", done:"ch5done", scene:"ch5_intro", label:"Ch.5: Time of Death" },
+  { need:"ch5done", done:"ch6done", scene:"ch6_intro", label:"Ch.6: The Last Episode" },
+];
+function nextChapter() {
+  return CHAPTER_FLOW.find((c) => State.flags[c.need] && !State.flags[c.done]) || null;
+}
+function nextChapterButton() {
+  const c = nextChapter();
+  if (!c) return "";
+  return `<button class="big-btn next-case" id="nextCaseBtn" data-scene="${c.scene}">▶ Continue the Broadcast — ${c.label}</button>`;
+}
+
 // ---------------------------------------------------------------- Free Time Hub
 function openHub() {
   showOverlayFull();
@@ -354,9 +373,8 @@ function openHub() {
         }).join("")}
       </div>
       <div class="hub-actions">
-        ${(State.flags.ch1done && !State.flags.ch3done)
-          ? '<button class="big-btn next-case" id="nextCaseBtn">▶ Continue the Broadcast — Ch.3: The Voice</button>' : ''}
-        ${State.flags.ch3done ? '<button class="big-btn" id="outroBtn">🎬 Closing Card</button>' : ''}
+        ${nextChapterButton()}
+        ${State.flags.ch6done ? '<button class="big-btn" id="outroBtn">🎬 Closing Card</button>' : ''}
         <button class="big-btn" id="galleryBtn">📁 Cast Gallery</button>
         <button class="big-btn" id="titleBtn">⌂ Title Screen</button>
       </div>
@@ -365,7 +383,7 @@ function openHub() {
     btn.onclick = () => playFreeTime(btn.dataset.id);
   });
   const nc = ov.querySelector("#nextCaseBtn");
-  if (nc) nc.onclick = () => runScene("ch3_intro");
+  if (nc) nc.onclick = () => runScene(nc.dataset.scene);
   const ob = ov.querySelector("#outroBtn");
   if (ob) ob.onclick = () => Player.play(OUTRO);
   ov.querySelector("#galleryBtn").onclick = openGallery;

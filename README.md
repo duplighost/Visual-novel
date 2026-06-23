@@ -24,13 +24,16 @@ Click or press **Space / Enter** to advance dialogue.
 - **Full cast gallery** — all 20 Ultimates with procedurally-drawn SVG sprites,
   bios, signature lines, and "the tell" that betrays them. Each sprite is generated
   from the character's palette, hair silhouette, eye shape, and talent emblem.
-- **Chapter 1 — "Last Call"** — Victim: Tanya. Blackened: Declan. Full loop:
-  prologue → motive → body discovery → **investigation** (collect Truth Bullets) →
-  **class trial** (nonstop debate: load a Truth Bullet, fire it at the contradiction) →
-  verdict → stylized execution.
-- **Chapter 3 — "The Voice"** — Victim: Rex. Blackened: Itsuki. Framed: Silas. The
-  case where a voice is treated as proof of a living person — and the killer's perfect
-  Silas impression is wrong in the one way only Silas's pathology could expose.
+- **A complete six-chapter season.** Each case is the full loop: motive → body
+  discovery → **investigation** (collect Truth Bullets) → **class trial** (nonstop
+  debate: load a Truth Bullet, fire it at the contradiction) → verdict → stylized
+  execution. Chapters unlock in order from the Free Time hub.
+  1. **"Last Call"** — Tanya / Declan. The poison cocktail and the man certain he's lethal.
+  2. **"What She Knew"** — Maeve / Jasmine. A flawless killer caught not on her face but on the clock she couldn't curate.
+  3. **"The Voice"** — Rex / Itsuki (framing Silas). A voice as proof of a living person — and the perfect Silas that's wrong the one way only Silas could expose.
+  4. **"Partners"** — Kieran / Chloe + Elias. Two culprits, two conflicting stories, one partnership that was never a partnership.
+  5. **"Time of Death"** — Asher / Nyx. The case where the murderer controls the forensic evidence, and you have to believe the body over the coroner.
+  6. **"The Last Episode"** — the mastermind unmasking. Not a murder to solve, but the season itself: who's been holding the pen, and whether the narrator can finally feel one of them.
 - **Free Time hub** — a six-event arc's capstone for every survivor: the mask drops
   on purpose, once, and they hand you the wound itself. Bonds are tracked and saved.
 
@@ -54,5 +57,6 @@ js/engine.js          # the VN runtime: dialogue, choices, investigation, trial,
   (the validator enforces exactly one weak statement per debate round and that every
   fired bullet is collectable), then wire a button in the Free Time hub.
 
-The remaining chapters from the design doc (Ch.2 *What She Knew*, Ch.4 *Partners*,
-Ch.5 *Time of Death*, Ch.6 *The Last Episode*) slot into the same scene/case format.
+All six chapters of the design doc's suggested spine are implemented. New chapters
+slot into the same scene/case format, gated by sequential `chNdone` flags in
+`CHAPTER_FLOW` (engine.js).
