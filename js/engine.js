@@ -41,11 +41,17 @@ function staticSprite() {
   </svg>`;
 }
 
+function artFor(id) { return `assets/cast/${id}.jpg`; }
+
 function spriteFor(id) {
   if (!id) return "";
   if (id === "static") return staticSprite();
+  if (id === "protagonist") return buildPortrait(CHARACTERS.protagonist);
   const c = CHARACTERS[id];
-  return c ? buildPortrait(c) : "";
+  if (!c) return "";
+  // the 20 Ultimates each have a full painterly card; zoom into the figure's bust
+  // so the card's own baked nameplate/side quotes sit outside the sprite frame.
+  return `<div class="sprite-img" role="img" aria-label="${c.name}" style="background-image:url('${artFor(id)}')"></div>`;
 }
 
 // ---------------------------------------------------------------- DOM helpers
@@ -374,7 +380,7 @@ function openHub() {
           const cls = [ done?"bonded":"", dead?"deceased":"", locked?"locked":"" ].join(" ");
           const mark = done ? '<span class="heart">♥</span>' : (locked ? '<span class="cross">✝</span>' : '');
           return `<button class="hub-card ${cls}" data-id="${id}" ${locked?"disabled":""} title="${locked?"This bond is lost — they're gone.":c.title}">
-            <div class="hub-portrait">${buildPortrait(c)}${dead?'<span class="dead-x">✕</span>':''}</div>
+            <div class="hub-portrait"><img class="card-img" loading="lazy" src="${artFor(id)}" alt="${c.name}">${dead?'<span class="dead-x">✕</span>':''}</div>
             <div class="hub-name">${c.short} ${mark}</div>
             <div class="hub-title">${locked?"— lost —":c.title.replace("Ultimate ","")}</div>
           </button>`;
@@ -436,7 +442,7 @@ function openGallery() {
           const c = CHARACTERS[id];
           const dead = isDeceased(id);
           return `<button class="gal-card ${dead?"deceased":""}" data-id="${id}">
-            <div class="gal-portrait">${buildPortrait(c)}${dead?'<span class="dead-x">✕</span>':''}</div>
+            <div class="gal-portrait"><img class="card-img" loading="lazy" src="${artFor(id)}" alt="${c.name}">${dead?'<span class="dead-x">✕</span>':''}</div>
             <div class="gal-name">${c.short}${State.flags["ft_"+id]?' <span class="heart">♥</span>':''}</div>
             <div class="gal-title">${c.title}</div>
           </button>`;
@@ -462,7 +468,7 @@ function showProfile(id) {
   ov.innerHTML = `
     <div class="panel profile" style="--accent:${c.palette.accent}">
       <div class="profile-top">
-        <div class="profile-portrait">${buildPortrait(c)}</div>
+        <div class="profile-portrait"><img class="card-img" src="${artFor(id)}" alt="${c.name}">${isDeceased(id)?'<span class="dead-x">✕</span>':''}</div>
         <div class="profile-info">
           <h2 class="profile-name">${c.name}</h2>
           <div class="profile-title">${c.title}</div>

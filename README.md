@@ -21,9 +21,13 @@ Click or press **Space / Enter** to advance dialogue.
 
 ## What's in the build
 
-- **Full cast gallery** — all 20 Ultimates with procedurally-drawn SVG sprites,
-  bios, signature lines, and "the tell" that betrays them. Each sprite is generated
-  from the character's palette, hair silhouette, eye shape, and talent emblem.
+- **Full cast gallery** — all 20 Ultimates rendered as painterly character cards
+  (`assets/cast/*.jpg`): full illustration, themed prop collage, in-world quote
+  bubbles, ornate nameplate, and signature. The gallery shows them as collectible
+  cards; clicking opens the full card alongside the bio, signature line, and "the
+  tell" that betrays them. In dialogue, each card is zoomed to a bust "standee" that
+  blends into the scene. (The protagonist and the host mascot STATIC use procedural
+  SVG, since they have no card.)
 - **A complete six-chapter season.** Each case is the full loop: motive → body
   discovery → **investigation** (collect Truth Bullets) → **class trial** (nonstop
   debate: load a Truth Bullet, fire it at the contradiction) → verdict → stylized
@@ -49,9 +53,10 @@ Click or press **Space / Enter** to advance dialogue.
 
 ```
 index.html            # shell: title, VN stage, overlay
-css/style.css         # the ink-black / bone / hot-pink broadcast skin + CRT scanlines
+css/style.css         # gothic gold-on-black painterly skin + CRT scanlines
+assets/cast/*.jpg     # the 20 painterly character cards (1000px, progressive JPEG)
 data/characters.js    # the 21-seat roster: palettes, bios, taglines, tells
-js/portraits.js       # procedural SVG sprite generator
+js/portraits.js       # procedural SVG fallback (protagonist + STATIC mascot)
 js/story.js           # scene scripts (prologue, Ch.1, Ch.3, hub, outro)
 js/casedata.js        # investigation spots, truth bullets, trials, free-time events
 js/engine.js          # the VN runtime: dialogue, choices, investigation, trial, hub, saves
