@@ -530,10 +530,9 @@ const STORY = {
     { bg:"bg-night" },
     { t:"The survivors walk out into a light none of them recognize — fewer than they came in, carrying every name they couldn't save." },
     { s:"protagonist", who:"You", t:"(I never did remember what I was the Ultimate of. Maybe it was this: being the one pair of eyes the building couldn't fool. The one who kept aiming the truth at the lie until the broadcast finally went dark.)" },
-    { t:"Behind you, Sienna walks unrecorded for the first time in her life. No hook. No monetization. Just a person, leaving, having finally felt one of them." },
-    { t:"THE END." },
     { flag:"ch6done" },
-    { go:"hub_intro" },
+    { unlock:"freetime" },
+    { epilogue:true },
   ],
 };
 

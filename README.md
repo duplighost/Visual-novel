@@ -48,6 +48,13 @@ Click or press **Space / Enter** to advance dialogue.
   marked across the gallery and hub (grayed sprite, red ✕), their profiles show their
   fate (chapter + role), and unbonded dead routes lock. The mastermind is marked
   "Unmasked" rather than deceased.
+- **Title-screen card montage** — two rows of the character cards drift behind the
+  logo, dimmed under a vignette (respects `prefers-reduced-motion`).
+- **Truth Logbook** — a persistent record of every Truth Bullet you've uncovered,
+  grouped by case, reachable from the hub. It survives the per-chapter bullet clear.
+- **Bond-gated epilogue** — the ending reflects how many routes you completed (four
+  tiers from zero to nearly all), and names the bonds you formed: the ones you knew
+  and lost, and the living who walk out beside you. Replayable from the hub.
 
 ## Project layout
 

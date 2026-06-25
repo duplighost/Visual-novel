@@ -5,8 +5,9 @@
 const SAVE_KEY = "static_vn_save_v1";
 
 const State = {
-  flags: {},          // freetime completions etc.
-  bullets: [],        // collected truth bullet ids
+  flags: {},          // freetime completions, chapter progress
+  bullets: [],        // truth bullets for the CURRENT case (cleared per chapter)
+  log: [],            // persistent logbook: every bullet ever found {id,name,desc,case}
   freetimeOpen: false,
   visited: {},        // investigation spots seen
 };
@@ -84,6 +85,7 @@ const Player = {
     if (b.unlock === "freetime") { State.freetimeOpen = true; save(); return this.step(); }
 
     if (b.go)   { return runScene(b.go); }
+    if (b.epilogue)    { return playEpilogue(); }
     if (b.investigate) { return runInvestigation(b.investigate, () => this.step()); }
     if (b.trial)       { return runTrial(b.trial, () => this.step()); }
     if (b.choices)     { return renderChoices(b.choices); }
@@ -241,8 +243,17 @@ function showSpot(spot, caseId, back) {
     </div>`;
   State.visited[caseId][spot.id] = true;
   addBullet(spot.bullet);
+  recordBullet(spot.bullet, (INVESTIGATIONS[caseId] || {}).title || "Case");
   save();
   ov.querySelector("#back").onclick = back;
+}
+
+// persistent logbook — survives the per-chapter bullet clear
+function recordBullet(b, caseTitle) {
+  if (!State.log.find((x) => x.id === b.id)) {
+    State.log.push({ id:b.id, name:b.name, desc:b.desc, case:caseTitle });
+    save();
+  }
 }
 
 // ---------------------------------------------------------------- Class Trial
@@ -388,7 +399,8 @@ function openHub() {
       </div>
       <div class="hub-actions">
         ${nextChapterButton()}
-        ${State.flags.ch6done ? '<button class="big-btn" id="outroBtn">🎬 Closing Card</button>' : ''}
+        ${State.flags.ch6done ? '<button class="big-btn" id="outroBtn">🎬 Epilogue</button>' : ''}
+        ${State.log.length ? '<button class="big-btn" id="logBtn">📓 Truth Logbook</button>' : ''}
         <button class="big-btn" id="galleryBtn">📁 Cast Gallery</button>
         <button class="big-btn" id="titleBtn">⌂ Title Screen</button>
       </div>
@@ -399,7 +411,9 @@ function openHub() {
   const nc = ov.querySelector("#nextCaseBtn");
   if (nc) nc.onclick = () => runScene(nc.dataset.scene);
   const ob = ov.querySelector("#outroBtn");
-  if (ob) ob.onclick = () => Player.play(OUTRO);
+  if (ob) ob.onclick = () => playEpilogue();
+  const lb = ov.querySelector("#logBtn");
+  if (lb) lb.onclick = () => openLogbook();
   ov.querySelector("#galleryBtn").onclick = openGallery;
   ov.querySelector("#titleBtn").onclick = showTitle;
 }
@@ -407,6 +421,84 @@ function openHub() {
 function isDeceased(id) {
   const f = FATES[id];
   return !!(f && State.flags[f.flag]);
+}
+
+// ---------------------------------------------------------------- Truth Logbook
+function openLogbook() {
+  showOverlayFull();
+  const ov = $("#overlay");
+  // preserve discovery order, group by case
+  const groups = [];
+  State.log.forEach((b) => {
+    let g = groups.find((x) => x.case === b.case);
+    if (!g) { g = { case:b.case, items:[] }; groups.push(g); }
+    g.items.push(b);
+  });
+  ov.innerHTML = `
+    <div class="panel logbook">
+      <h2 class="panel-title">📓 TRUTH LOGBOOK</h2>
+      <p class="panel-sub">Every Truth Bullet you've uncovered — ${State.log.length} across ${groups.length} ${groups.length===1?"case":"cases"}.</p>
+      ${groups.map((g)=>`
+        <div class="log-case">
+          <h3 class="log-case-title">${g.case}</h3>
+          ${g.items.map((b)=>`<div class="bullet"><b>${b.name}</b><span>${b.desc}</span></div>`).join("")}
+        </div>`).join("")}
+      <button class="big-btn" id="backHub">◀ Back</button>
+    </div>`;
+  ov.querySelector("#backHub").onclick = () => { if (State.freetimeOpen) openHub(); else showTitle(); };
+}
+
+// ---------------------------------------------------------------- Epilogue
+function playEpilogue() {
+  const order = ROSTER_ORDER.filter((id) => FREETIME[id]);
+  const bonded = order.filter((id) => State.flags["ft_"+id]);
+  const bondedLost = bonded.filter((id) => isDeceased(id));
+  const bondedAlive = bonded.filter((id) => !isDeceased(id));
+  const n = bonded.length;
+  const nameList = (ids) => ids.map((id)=>CHARACTERS[id].short).join(", ");
+
+  // tiered framing on how many wounds you let yourself know
+  let tier;
+  if (n === 0) tier = [
+    "You solved every case and never once let anyone in. You walked the whole game with your hands clean and your heart closed.",
+    "Twenty wounds passed through this studio and you learned the shape of none of them. You were the perfect detective. You were entirely alone.",
+    "The light outside is very bright, and there is no one beside you to squint into it with.",
+  ];
+  else if (n <= 5) tier = [
+    `You let a few of them in — ${n} ${n===1?"person":"people"} who got to be more than a suspect to you.`,
+    "It wasn't many. But it was real, and in a building designed to turn people into evidence, real was the rarest thing there was.",
+    "You carry them out with you. The ones you reached, and the ache of the ones you didn't.",
+  ];
+  else if (n <= 12) tier = [
+    `You knew them — really knew them. ${n} masks dropped for you, ${n} wounds handed over on purpose.`,
+    "You refused to treat this as only a puzzle. You kept choosing the harder thing: to stay, past the point each of them expected you to leave.",
+    "That's why walking out hurts this much. You have something to grieve. That was always the point.",
+  ];
+  else tier = [
+    `You let almost everyone in — ${n} of the twenty. You learned every defense mechanism in the building and loved past every one of them.`,
+    "You were the one pair of eyes the studio couldn't fool, and the one heart it couldn't close. Both at once. That's the whole trick of you.",
+    "No one has ever been known the way you knew them. Carry that out into the light. It's the only thing in here that was ever really yours.",
+  ];
+
+  const beats = [
+    { bg:"bg-dark" },
+    { t:"EPILOGUE." },
+    { bg:"bg-night" },
+    ...tier.map((t)=>({ t })),
+  ];
+  if (bondedLost.length) {
+    beats.push({ t:`The ones you knew and couldn't save walk out with you anyway, in the only way the dead ever do — carried: ${nameList(bondedLost)}.` });
+  }
+  if (bondedAlive.length) {
+    beats.push({ t:`And the ones still warm, who chose to leave beside you: ${nameList(bondedAlive)}. You didn't do this alone after all.` });
+  } else if (n > 0) {
+    beats.push({ t:"Every soul you let in is gone now. You leave with their gifts in your pockets and their names in your mouth, and that has to be enough." });
+  }
+  beats.push({ t:"Behind you, Sienna walks unrecorded for the first time in her life — no hook, no monetization, just a person who finally felt one of them." });
+  beats.push({ t:"The ON AIR sign is dark. The story is yours now. However much of it you chose to let matter." });
+  beats.push({ t:"THE END." });
+
+  Player.play(beats, () => openHub());
 }
 
 function playFreeTime(id) {
@@ -485,9 +577,23 @@ function showProfile(id) {
 }
 
 // ---------------------------------------------------------------- Title
+let montageBuilt = false;
+function buildMontage() {
+  if (montageBuilt) return;
+  const m = $("#montage");
+  if (!m) return;
+  // two rows of drifting cards (duplicated for a seamless loop)
+  const ids = ROSTER_ORDER.slice();
+  const rowA = ids.slice(0, 10), rowB = ids.slice(10);
+  const strip = (row) => row.concat(row).map((id)=>
+    `<div class="m-card" style="background-image:url('${artFor(id)}')"></div>`).join("");
+  m.innerHTML = `<div class="m-row m-row-a">${strip(rowA)}</div><div class="m-row m-row-b">${strip(rowB)}</div>`;
+  montageBuilt = true;
+}
 function showTitle() {
   $("#stage").style.display = "none";
   $("#overlay").style.display = "none";
+  buildMontage();
   $("#title").style.display = "flex";
   $("#continueBtn").style.display = hasSave() ? "block" : "none";
 }
@@ -514,6 +620,8 @@ function load() {
     if (!raw) return false;
     const data = JSON.parse(raw);
     Object.assign(State, data);
+    if (!Array.isArray(State.log)) State.log = [];
+    if (!Array.isArray(State.bullets)) State.bullets = [];
     return true;
   } catch(e){ return false; }
 }
@@ -523,7 +631,7 @@ function hasSave() {
 
 // ---------------------------------------------------------------- Boot
 function startNew() {
-  State.flags = {}; State.bullets = []; State.freetimeOpen = false; State.visited = {};
+  State.flags = {}; State.bullets = []; State.log = []; State.freetimeOpen = false; State.visited = {};
   save();
   runScene("prologue");
 }

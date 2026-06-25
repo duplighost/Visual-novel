@@ -76,8 +76,23 @@ html,body{ margin:0; height:100%; background:#000; overflow:hidden;
 .big-btn.next-case:hover{ box-shadow:0 6px 22px rgba(255,45,111,.4); }
 
 /* ---------- title screen ---------- */
-#title{ position:absolute; inset:0; z-index:30; display:flex; align-items:center; justify-content:center; }
-.title-inner{ text-align:center; padding:30px; }
+#title{ position:absolute; inset:0; z-index:30; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.title-inner{ text-align:center; padding:30px; position:relative; z-index:3; }
+
+/* drifting card montage behind the title */
+.montage{ position:absolute; inset:-6% -2%; z-index:1; display:flex; flex-direction:column;
+  justify-content:center; gap:2.4vh; filter:grayscale(.25) brightness(.5) contrast(1.05); opacity:.55; }
+.m-row{ display:flex; gap:1.2vw; width:max-content; will-change:transform; }
+.m-row-a{ animation:drift-l 80s linear infinite; }
+.m-row-b{ animation:drift-r 96s linear infinite; }
+.m-card{ flex:0 0 auto; width:13vw; min-width:150px; height:23vh; min-height:200px;
+  background-size:cover; background-position:50% 18%; border-radius:6px;
+  border:1px solid rgba(216,176,86,.35); box-shadow:0 8px 24px rgba(0,0,0,.6); }
+@keyframes drift-l{ from{transform:translateX(0)} to{transform:translateX(-50%)} }
+@keyframes drift-r{ from{transform:translateX(-50%)} to{transform:translateX(0)} }
+.title-vignette{ position:absolute; inset:0; z-index:2; pointer-events:none;
+  background:radial-gradient(ellipse at 50% 50%, rgba(8,6,5,.55) 0%, rgba(6,5,4,.82) 55%, #050403 100%); }
+@media (prefers-reduced-motion: reduce){ .m-row-a,.m-row-b{ animation:none } }
 .title-logo{ position:relative; display:inline-block; }
 .logo-static{ font-family:var(--serif); font-size:clamp(60px,16vw,170px); font-weight:700; letter-spacing:.1em;
   color:var(--gold2); text-shadow:0 2px 0 var(--gold-dim), 0 0 30px rgba(216,176,86,.4), 4px 5px 0 #000;
@@ -227,6 +242,11 @@ html,body{ margin:0; height:100%; background:#000; overflow:hidden;
 .profile-tell{ color:var(--steel); margin:10px 0; }
 .profile-tell b{ color:var(--gold); }
 .profile-status{ margin-top:10px; font-weight:bold; color:var(--gold2); font-family:var(--serif); letter-spacing:.04em; }
+
+/* ---------- truth logbook ---------- */
+.logbook .log-case{ margin:18px 0; }
+.log-case-title{ font-family:var(--serif); color:var(--gold2); font-size:1.25rem; letter-spacing:.04em;
+  border-bottom:1px solid var(--gold-dim); padding-bottom:6px; margin:0 0 12px; }
 
 /* ---------- deceased / fate markers ---------- */
 .hub-portrait, .gal-portrait{ position:relative; }
