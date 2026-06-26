@@ -52,9 +52,21 @@ Click or press **Space / Enter** to advance dialogue.
   logo, dimmed under a vignette (respects `prefers-reduced-motion`).
 - **Truth Logbook** — a persistent record of every Truth Bullet you've uncovered,
   grouped by case, reachable from the hub. It survives the per-chapter bullet clear.
-- **Bond-gated epilogue** — the ending reflects how many routes you completed (four
+- **Affection meter + free-time economy** — bonds are progressive: each Free Time
+  visit advances a six-stage chain (a ♥ meter on each card), and only the final stage
+  unlocks the capstone. You get a limited number of moments per break, so you can't max
+  everyone in one run — choose who to invest in, and **max a bond before that
+  character's chapter or lose it.** Maxed bonds can be revisited for free.
+- **Bond-gated epilogue** — the ending reflects how many routes you *completed* (four
   tiers from zero to nearly all), and names the bonds you formed: the ones you knew
   and lost, and the living who walk out beside you. Replayable from the hub.
+- **Per-character execution splash** — each execution opens on a full-screen card of
+  the blackened, red-washed with a "CANCELLED" stamp and the execution's title, before
+  the play-by-play.
+- **Procedural music & SFX** — an ambient, pad-based score synthesized live with the
+  Web Audio API (no audio files), with a distinct mood per screen (title, daily life,
+  trial, execution, hub) plus stingers, truth-bullet "breaks", and dialogue blips.
+  Toggle with the ♪ button. Degrades silently where Web Audio is unavailable.
 
 ## Project layout
 
@@ -63,6 +75,7 @@ index.html            # shell: title, VN stage, overlay
 css/style.css         # gothic gold-on-black painterly skin + CRT scanlines
 assets/cast/*.jpg     # the 20 painterly character cards (1000px, progressive JPEG)
 data/characters.js    # the 21-seat roster: palettes, bios, taglines, tells
+js/audio.js           # procedural Web Audio score + SFX (no asset files)
 js/portraits.js       # procedural SVG fallback (protagonist + STATIC mascot)
 js/story.js           # scene scripts (prologue, Ch.1, Ch.3, hub, outro)
 js/casedata.js        # investigation spots, truth bullets, trials, free-time events

@@ -5,12 +5,15 @@
 const SAVE_KEY = "static_vn_save_v1";
 
 const State = {
-  flags: {},          // freetime completions, chapter progress
+  flags: {},          // freetime completions (ft_<id> = maxed), chapter progress
   bullets: [],        // truth bullets for the CURRENT case (cleared per chapter)
   log: [],            // persistent logbook: every bullet ever found {id,name,desc,case}
+  affection: {},      // id -> 0..MAX_AFFECTION (stages of the free-time chain done)
+  slots: 0,           // free-time actions remaining this break
   freetimeOpen: false,
   visited: {},        // investigation spots seen
 };
+const MAX_AFFECTION = 6; // 5 build-up events + the capstone
 
 // ---- mascot sprite (not a roster character) ---------------------------------
 function staticSprite() {
@@ -81,10 +84,12 @@ const Player = {
     if (b.sfx)  { doSfx(b.sfx); return this.step(); }
     if (b.give) { addBullet(b.give); return this.step(); }
     if (b.flag) { State.flags[b.flag] = true; save(); return this.step(); }
+    if (b.slots !== undefined) { State.slots = b.slots; save(); return this.step(); }
     if (b.clearBullets) { State.bullets = []; save(); return this.step(); }
     if (b.unlock === "freetime") { State.freetimeOpen = true; save(); return this.step(); }
 
     if (b.go)   { return runScene(b.go); }
+    if (b.execArt)     { return showExecutionSplash(b, () => this.step()); }
     if (b.epilogue)    { return playEpilogue(); }
     if (b.investigate) { return runInvestigation(b.investigate, () => this.step()); }
     if (b.trial)       { return runTrial(b.trial, () => this.step()); }
@@ -100,6 +105,35 @@ function runScene(label) {
   const beats = STORY[label];
   if (!beats) { openHub(); return; }
   Player.play(beats);
+}
+
+// full-screen execution splash using the blackened's card art
+function showExecutionSplash(b, done) {
+  if (window.GameAudio) { GameAudio.setMood("exec"); GameAudio.sfx("boom"); }
+  doSfx("glitch");
+  const ids = Array.isArray(b.execArt) ? b.execArt : [b.execArt];
+  $("#stage").style.display = "none";
+  const ov = $("#overlay");
+  ov.style.display = "flex";
+  ov.innerHTML = `
+    <div class="exec-splash">
+      <div class="exec-banner">EXECUTION</div>
+      <div class="exec-cards">
+        ${ids.map((id)=>`<div class="exec-card">
+          <img src="${artFor(id)}" alt="${CHARACTERS[id].name}">
+          <span class="exec-stamp">CANCELLED</span>
+        </div>`).join("")}
+      </div>
+      <div class="exec-title">${b.title || ""}</div>
+      <div class="exec-sub">${ids.map((id)=>CHARACTERS[id].name).join("&nbsp;&nbsp;·&nbsp;&nbsp;")}</div>
+      <button class="big-btn next-case" id="execGo">▶ Proceed</button>
+    </div>`;
+  ov.querySelector("#execGo").onclick = () => {
+    if (window.GameAudio) GameAudio.sfx("select");
+    ov.style.display = "none";
+    $("#stage").style.display = "";
+    done();
+  };
 }
 
 // ---------------------------------------------------------------- Rendering
@@ -144,6 +178,7 @@ function typeText(node, text, done) {
   node.dataset.full = text;
   typing = setInterval(() => {
     node.textContent = text.slice(0, ++i);
+    if (window.GameAudio && i % 2 === 0) GameAudio.blip();
     if (i >= text.length) { clearInterval(typing); typing = null; if (done) done(); }
   }, speed);
 }
@@ -171,15 +206,18 @@ function renderChoices(choices) {
 }
 
 // ---------------------------------------------------------------- Backgrounds & SFX
+const BG_MOOD = { "bg-dark":"dark", "bg-studio":"day", "bg-night":"night", "bg-bar":"day", "bg-trial":"trial" };
 function setBg(cls) {
   const bg = $("#bg");
   bg.className = "bg " + cls;
+  if (window.GameAudio) GameAudio.setMood(BG_MOOD[cls] || "day");
 }
 function doSfx(kind) {
   const root = $("#game");
   root.classList.remove("fx-shake","fx-flash","fx-glitch");
   void root.offsetWidth;
   root.classList.add("fx-" + kind);
+  if (window.GameAudio) GameAudio.sfx(kind);
   setTimeout(() => root.classList.remove("fx-" + kind), 700);
 }
 
@@ -300,6 +338,7 @@ function runTrial(caseId, done) {
         if (!chosenBullet) { $("#tmsg").innerHTML = `<span class="bad">Load a Truth Bullet first.</span>`; return; }
         if (s.weak && chosenBullet === s.bullet) {
           doSfx("flash");
+          if (window.GameAudio) GameAudio.sfx("break");
           btn.classList.add("hit");
           $("#tmsg").innerHTML = `<span class="good">BREAK!</span> ${escapeHtml(s.success)}`;
           disableAll();
@@ -333,7 +372,7 @@ function runTrial(caseId, done) {
       btn.onclick = () => {
         const o = a.options[+btn.dataset.i];
         if (o.correct) {
-          doSfx("flash"); btn.classList.add("hit");
+          doSfx("flash"); if (window.GameAudio) GameAudio.sfx("good"); btn.classList.add("hit");
           ov.querySelectorAll(".accuse").forEach(b=>b.disabled=true);
           $("#tmsg").innerHTML = `<span class="good">VERDICT REACHED.</span> ${escapeHtml(a.right)}`;
           const next = el("button","big-btn","▶ Deliver the verdict");
@@ -375,25 +414,33 @@ function nextChapterButton() {
 // ---------------------------------------------------------------- Free Time Hub
 function openHub() {
   showOverlayFull();
+  if (window.GameAudio) GameAudio.setMood("hub");
   const ov = $("#overlay");
   const order = ROSTER_ORDER.filter((id) => FREETIME[id]);
+  const bonded = order.filter(id=>State.flags["ft_"+id]).length;
   ov.innerHTML = `
     <div class="panel hub">
       <h2 class="panel-title">⏳ FREE TIME</h2>
-      <p class="panel-sub">Spend time with a survivor. Each capstone is the wound, cracked open by love instead of pressure.</p>
-      <p class="hub-progress">Bonds formed: ${order.filter(id=>State.flags["ft_"+id]).length} / ${order.length}</p>
+      <p class="panel-sub">Spend a moment with someone. Each visit deepens the bond; max it out for the capstone — the wound cracked open by love instead of pressure.</p>
+      <p class="hub-progress">Bonds completed: ${bonded} / ${order.length}
+        &nbsp;•&nbsp; <span class="slots ${State.slots<=0?'spent':''}">${State.slots} ${State.slots===1?'moment':'moments'} left this break</span></p>
       <div class="hub-grid">
         ${order.map((id)=>{
           const c = CHARACTERS[id];
-          const done = State.flags["ft_"+id];
+          const aff = State.affection[id] || 0;
+          const done = aff >= MAX_AFFECTION;
           const dead = isDeceased(id);
-          const locked = dead && !done;
-          const cls = [ done?"bonded":"", dead?"deceased":"", locked?"locked":"" ].join(" ");
-          const mark = done ? '<span class="heart">♥</span>' : (locked ? '<span class="cross">✝</span>' : '');
-          return `<button class="hub-card ${cls}" data-id="${id}" ${locked?"disabled":""} title="${locked?"This bond is lost — they're gone.":c.title}">
-            <div class="hub-portrait"><img class="card-img" loading="lazy" src="${artFor(id)}" alt="${c.name}">${dead?'<span class="dead-x">✕</span>':''}</div>
-            <div class="hub-name">${c.short} ${mark}</div>
-            <div class="hub-title">${locked?"— lost —":c.title.replace("Ultimate ","")}</div>
+          const lost = dead && !done;
+          const noTime = !done && !dead && State.slots <= 0;
+          const cls = [ done?"bonded":"", dead?"deceased":"", lost?"locked":"", noTime?"notime":"" ].join(" ");
+          const disabled = lost || noTime;
+          const meter = `<span class="meter">${"♥".repeat(aff)}<span class="m-empty">${"♥".repeat(MAX_AFFECTION-aff)}</span></span>`;
+          const title = done ? "Bond complete — revisit the capstone"
+            : lost ? "Lost — they're gone" : noTime ? "No time left this break" : `Spend a moment with ${c.short}`;
+          return `<button class="hub-card ${cls}" data-id="${id}" ${disabled?"disabled":""} title="${title}">
+            <div class="hub-portrait"><img class="card-img" loading="lazy" src="${artFor(id)}" alt="${c.name}">${dead?'<span class="dead-x">✕</span>':''}${done?'<span class="bond-seal">♥</span>':''}</div>
+            <div class="hub-name">${c.short}</div>
+            <div class="hub-meter">${meter}</div>
           </button>`;
         }).join("")}
       </div>
@@ -502,23 +549,51 @@ function playEpilogue() {
 }
 
 function playFreeTime(id) {
-  if (isDeceased(id) && !State.flags["ft_"+id]) return; // can't bond with the dead
   const c = CHARACTERS[id];
   const ft = FREETIME[id];
-  showStage();
-  setBg("bg-night");
-  const events = ft.events || [];
-  const beats = [
-    { bg:"bg-night" },
-    { s:id, who:c.name, t:`${c.title}. The tell to watch: ${c.tell || "—"}` },
-    ...events.map((line)=>({ s:id, t:line })),
-    ...ft.lines.map((line)=>({ s:id, t:line })),
-    { s:id, t:`★ BOND FORMED — Gift received: ${ft.gift}` },
-  ];
+  const aff = State.affection[id] || 0;
+  const done = aff >= MAX_AFFECTION;
+
+  if (done) return viewCapstone(id);        // already maxed — re-read the capstone, free
+  if (isDeceased(id)) return;               // lost route
+  if (State.slots <= 0) return;             // out of time this break
+
+  const stage = aff;                        // 0..5
+  const isCapstone = stage === MAX_AFFECTION - 1;
+  showStage(); setBg("bg-night");
+
+  const beats = [{ bg:"bg-night" }];
+  if (stage === 0) beats.push({ s:id, who:c.name, t:`${c.title}. The tell to watch: ${c.tell || "—"}` });
+  if (!isCapstone) {
+    beats.push({ s:id, who:c.name, t:ft.events[stage] });
+    beats.push({ s:id, t:`(Bond with ${c.short}: ${"♥".repeat(stage+1)}${"·".repeat(MAX_AFFECTION-stage-1)})` });
+  } else {
+    beats.push({ s:id, t:"— Capstone —" });
+    ft.lines.forEach((line)=>beats.push({ s:id, who:c.name, t:line }));
+    beats.push({ s:id, t:`★ BOND COMPLETE — Gift received: ${ft.gift}` });
+  }
+
+  State.slots = Math.max(0, State.slots - 1);
+  State.affection[id] = aff + 1;
+  if (State.affection[id] >= MAX_AFFECTION) State.flags["ft_"+id] = true;
+  save();
+
   Player.play(beats, () => {
-    State.flags["ft_"+id] = true; save();
+    if (isCapstone && window.GameAudio) GameAudio.sfx("bond");
     openHub();
   });
+}
+
+function viewCapstone(id) {
+  const c = CHARACTERS[id], ft = FREETIME[id];
+  showStage(); setBg("bg-night");
+  const beats = [
+    { bg:"bg-night" },
+    { s:id, who:c.name, t:`${c.title} — bond complete. ♥` },
+    ...ft.lines.map((line)=>({ s:id, who:c.name, t:line })),
+    { s:id, t:`Gift kept: ${ft.gift}` },
+  ];
+  Player.play(beats, () => openHub());
 }
 
 // ---------------------------------------------------------------- Cast Gallery
@@ -594,6 +669,7 @@ function showTitle() {
   $("#stage").style.display = "none";
   $("#overlay").style.display = "none";
   buildMontage();
+  if (window.GameAudio) GameAudio.setMood("title");
   $("#title").style.display = "flex";
   $("#continueBtn").style.display = hasSave() ? "block" : "none";
 }
@@ -622,6 +698,8 @@ function load() {
     Object.assign(State, data);
     if (!Array.isArray(State.log)) State.log = [];
     if (!Array.isArray(State.bullets)) State.bullets = [];
+    if (!State.affection || typeof State.affection !== "object") State.affection = {};
+    if (typeof State.slots !== "number") State.slots = 0;
     return true;
   } catch(e){ return false; }
 }
@@ -631,7 +709,8 @@ function hasSave() {
 
 // ---------------------------------------------------------------- Boot
 function startNew() {
-  State.flags = {}; State.bullets = []; State.log = []; State.freetimeOpen = false; State.visited = {};
+  State.flags = {}; State.bullets = []; State.log = []; State.affection = {}; State.slots = 0;
+  State.freetimeOpen = false; State.visited = {};
   save();
   runScene("prologue");
 }
@@ -641,11 +720,20 @@ function continueGame() {
   else runScene("prologue");
 }
 
+function audioKick() { if (window.GameAudio) GameAudio.start(); }
+
 window.addEventListener("DOMContentLoaded", () => {
-  $("#newBtn").onclick = startNew;
-  $("#continueBtn").onclick = continueGame;
-  $("#galleryTitleBtn").onclick = openGallery;
+  $("#newBtn").onclick = () => { audioKick(); GameAudio && GameAudio.sfx("select"); startNew(); };
+  $("#continueBtn").onclick = () => { audioKick(); GameAudio && GameAudio.sfx("select"); continueGame(); };
+  $("#galleryTitleBtn").onclick = () => { audioKick(); openGallery(); };
   $("#stage").addEventListener("click", advance);
+  const mb = $("#muteBtn");
+  if (mb) mb.onclick = () => {
+    audioKick();
+    const m = GameAudio ? GameAudio.toggle() : true;
+    mb.textContent = m ? "♪̶" : "♪";
+    mb.classList.toggle("muted", m);
+  };
   document.addEventListener("keydown", (e) => {
     if ((e.key === " " || e.key === "Enter") && $("#stage").style.display !== "none") {
       e.preventDefault(); advance();
