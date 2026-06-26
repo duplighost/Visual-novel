@@ -243,6 +243,43 @@ html,body{ margin:0; height:100%; background:#000; overflow:hidden;
 .profile-tell b{ color:var(--gold); }
 .profile-status{ margin-top:10px; font-weight:bold; color:var(--gold2); font-family:var(--serif); letter-spacing:.04em; }
 
+/* ---------- settings ---------- */
+.set-row{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin:18px 0;
+  padding-bottom:14px; border-bottom:1px solid rgba(216,176,86,.18); }
+.set-row > label{ font-family:var(--serif); color:var(--gold2); min-width:120px; font-size:1.1rem; }
+.set-opts{ display:flex; gap:8px; flex-wrap:wrap; }
+.set-btn{ font-family:inherit; cursor:pointer; color:var(--bone); background:rgba(255,255,255,.04);
+  border:1px solid var(--gold-dim); border-radius:4px; padding:8px 16px; transition:all .15s; }
+.set-btn:hover{ border-color:var(--gold); }
+.set-btn.sel{ background:var(--gold); color:#1a1206; font-weight:bold; border-color:var(--gold); }
+#volRange{ flex:1; min-width:160px; accent-color:var(--gold); }
+#volVal{ min-width:44px; color:var(--steel); }
+
+/* ---------- save / load slots ---------- */
+.slot-list{ display:flex; flex-direction:column; gap:12px; margin:18px 0; }
+.slot-row{ display:flex; align-items:center; gap:14px; background:rgba(20,16,10,.5);
+  border:1px solid var(--gold-dim); border-radius:6px; padding:14px 18px; }
+.slot-info{ flex:1; display:flex; flex-direction:column; }
+.slot-info b{ font-family:var(--serif); color:var(--gold2); font-size:1.15rem; }
+.slot-info span{ color:var(--steel); font-size:.9rem; }
+.slot-act{ flex:0 0 auto; padding:10px 18px; }
+
+/* ---------- defense (relationship-gated) ---------- */
+.defense-top{ display:flex; gap:20px; align-items:center; flex-wrap:wrap; margin-bottom:18px; }
+.defense-portrait{ width:120px; height:150px; flex:0 0 auto; position:relative; border-radius:6px; overflow:hidden;
+  border:1px solid var(--accent,var(--gold)); }
+.defense-portrait .sprite-img{ background-size:150%; background-position:50% 12%; -webkit-mask-image:none; mask-image:none; }
+.defense-prompt{ font-size:1.2rem; line-height:1.5; }
+.defense-meter{ margin-top:8px; color:var(--steel); }
+.defense-meter .meter{ color:var(--pink); }
+.defense-meter .m-empty{ color:#4a3a3e; }
+.defense-opts{ display:flex; flex-direction:column; gap:12px; }
+.choice-btn.locked{ opacity:.55; cursor:not-allowed; border-style:dashed; }
+.lock-note{ display:block; font-size:.85rem; color:var(--steel); margin-top:6px; font-style:italic; }
+.defense-msg{ margin-top:16px; font-size:1.05rem; line-height:1.6; }
+.defense-msg .good{ color:var(--gold2); font-weight:bold; }
+.defense-msg .big-btn{ display:block; margin-top:14px; }
+
 /* ---------- mute button ---------- */
 .mute-btn{ position:fixed; top:12px; right:14px; z-index:60; width:38px; height:38px;
   border-radius:50%; border:1px solid var(--gold); background:rgba(12,9,7,.7); color:var(--gold2);

@@ -67,6 +67,16 @@ Click or press **Space / Enter** to advance dialogue.
   Web Audio API (no audio files), with a distinct mood per screen (title, daily life,
   trial, execution, hub) plus stingers, truth-bullet "breaks", and dialogue blips.
   Toggle with the ♪ button. Degrades silently where Web Audio is unavailable.
+- **Relationship-gated trial moments** — bonds pay off in court. If you've invested
+  enough time in a character, you can **vouch** for them when the room turns on them
+  (defending Silas in Ch.3), and bonded allies surface private **insights** during
+  investigations (Asher's "watch her hands" in Ch.5). Without the bond, those options
+  are locked — the relationship *is* the mechanic.
+- **Settings** — text speed (Slow / Normal / Fast / Instant) and a volume slider with
+  mute, persisted across sessions; reachable from the title and the hub.
+- **Save slots** — autosave plus three manual slots, each showing chapter, bond count,
+  and timestamp. Save from the hub, Load from the title or hub, Continue picks the most
+  recent save.
 
 ## Project layout
 

@@ -7,9 +7,10 @@
 
 const GameAudio = (function () {
   let ctx = null, master = null, musicBus = null, sfxBus = null, delay = null;
-  let muted = false, started = false;
+  let muted = false, started = false, vol = 0.6;
   let moodName = null, mood = null, timer = null, step = 0;
   let lastBlip = 0;
+  const BASE = 0.5; // master ceiling at vol=1
 
   // chord progressions expressed as semitone offsets from a root frequency
   const MOODS = {
@@ -53,9 +54,17 @@ const GameAudio = (function () {
     if (ctx.state === "suspended") ctx.resume();
     started = true;
     master.gain.cancelScheduledValues(ctx.currentTime);
-    master.gain.linearRampToValueAtTime(muted ? 0 : 0.30, ctx.currentTime + 1.4);
+    master.gain.linearRampToValueAtTime(muted ? 0 : BASE * vol, ctx.currentTime + 1.4);
     if (mood && !timer) schedule();
   }
+
+  function applyMaster(ramp) {
+    if (!ctx || !master) return;
+    master.gain.cancelScheduledValues(ctx.currentTime);
+    master.gain.linearRampToValueAtTime(muted ? 0 : BASE * vol, ctx.currentTime + (ramp || 0.2));
+  }
+  function setVolume(v) { vol = Math.max(0, Math.min(1, v)); applyMaster(0.15); }
+  function getVolume() { return vol; }
 
   function note(freq, when, dur, wave, cut, vGain) {
     const o = ctx.createOscillator(); o.type = wave; o.frequency.value = freq;
@@ -144,18 +153,12 @@ const GameAudio = (function () {
     ping(420 + Math.random()*120, 0.025, "square", 0.04);
   }
 
-  function toggle() {
-    muted = !muted;
-    if (ctx && master) {
-      master.gain.cancelScheduledValues(ctx.currentTime);
-      master.gain.linearRampToValueAtTime(muted ? 0 : 0.30, ctx.currentTime + 0.2);
-    }
-    return muted;
-  }
+  function toggle() { muted = !muted; applyMaster(0.2); return muted; }
+  function setMuted(m) { muted = !!m; applyMaster(0.2); }
   function isMuted() { return muted; }
   function isOn() { return started && !!ctx; }
 
-  return { start, setMood, sfx, blip, toggle, isMuted, isOn };
+  return { start, setMood, sfx, blip, toggle, setMuted, isMuted, isOn, setVolume, getVolume };
 })();
 
 if (typeof module !== "undefined") module.exports = { GameAudio };

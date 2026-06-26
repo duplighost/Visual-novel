@@ -2,7 +2,22 @@
 //  ENGINE  —  the visual-novel runtime for STATIC
 // ============================================================================
 
-const SAVE_KEY = "static_vn_save_v1";
+const AUTO_SLOT = "static_slot_auto";
+const SLOT_KEYS = ["static_slot_1", "static_slot_2", "static_slot_3"];
+const SETTINGS_KEY = "static_settings_v1";
+
+const Settings = { textSpeed: 16, volume: 0.6, muted: false };
+function loadSettings() {
+  try { Object.assign(Settings, JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}")); } catch (e) {}
+}
+function saveSettings() {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(Settings)); } catch (e) {}
+}
+function applySettings() {
+  if (window.GameAudio) { GameAudio.setVolume(Settings.volume); GameAudio.setMuted(Settings.muted); }
+  const mb = document.getElementById("muteBtn");
+  if (mb) { mb.textContent = Settings.muted ? "♪̶" : "♪"; mb.classList.toggle("muted", Settings.muted); }
+}
 
 const State = {
   flags: {},          // freetime completions (ft_<id> = maxed), chapter progress
@@ -84,11 +99,23 @@ const Player = {
     if (b.sfx)  { doSfx(b.sfx); return this.step(); }
     if (b.give) { addBullet(b.give); return this.step(); }
     if (b.flag) { State.flags[b.flag] = true; save(); return this.step(); }
+    if (b.ifFlag) { // conditional line: only shown if a flag is set
+      if (State.flags[b.ifFlag]) return renderLine(b);
+      return this.step();
+    }
     if (b.slots !== undefined) { State.slots = b.slots; save(); return this.step(); }
     if (b.clearBullets) { State.bullets = []; save(); return this.step(); }
     if (b.unlock === "freetime") { State.freetimeOpen = true; save(); return this.step(); }
 
     if (b.go)   { return runScene(b.go); }
+    if (b.ally) {
+      // a bonded ally's insight — only surfaces if you spent enough time with them
+      if ((State.affection[b.ally.id] || 0) >= (b.ally.need || 1)) {
+        return renderLine({ s:b.ally.id, who:CHARACTERS[b.ally.id].name + " (ally)", t:b.ally.text });
+      }
+      return this.step();
+    }
+    if (b.defend)      { return runDefense(b.defend, () => this.step()); }
     if (b.execArt)     { return showExecutionSplash(b, () => this.step()); }
     if (b.epilogue)    { return playEpilogue(); }
     if (b.investigate) { return runInvestigation(b.investigate, () => this.step()); }
@@ -173,9 +200,10 @@ let typing = null;
 function typeText(node, text, done) {
   if (typing) clearInterval(typing);
   node.textContent = "";
-  let i = 0;
-  const speed = 16;
   node.dataset.full = text;
+  const speed = Settings.textSpeed;
+  if (!speed) { node.textContent = text; if (done) done(); return; } // instant
+  let i = 0;
   typing = setInterval(() => {
     node.textContent = text.slice(0, ++i);
     if (window.GameAudio && i % 2 === 0) GameAudio.blip();
@@ -449,6 +477,8 @@ function openHub() {
         ${State.flags.ch6done ? '<button class="big-btn" id="outroBtn">🎬 Epilogue</button>' : ''}
         ${State.log.length ? '<button class="big-btn" id="logBtn">📓 Truth Logbook</button>' : ''}
         <button class="big-btn" id="galleryBtn">📁 Cast Gallery</button>
+        <button class="big-btn" id="saveBtn">💾 Save</button>
+        <button class="big-btn" id="setBtn">⚙ Settings</button>
         <button class="big-btn" id="titleBtn">⌂ Title Screen</button>
       </div>
     </div>`;
@@ -462,6 +492,8 @@ function openHub() {
   const lb = ov.querySelector("#logBtn");
   if (lb) lb.onclick = () => openLogbook();
   ov.querySelector("#galleryBtn").onclick = openGallery;
+  ov.querySelector("#saveBtn").onclick = openSaveMenu;
+  ov.querySelector("#setBtn").onclick = () => openSettings("hub");
   ov.querySelector("#titleBtn").onclick = showTitle;
 }
 
@@ -493,6 +525,129 @@ function openLogbook() {
       <button class="big-btn" id="backHub">◀ Back</button>
     </div>`;
   ov.querySelector("#backHub").onclick = () => { if (State.freetimeOpen) openHub(); else showTitle(); };
+}
+
+// ---------------------------------------------------------------- Settings
+function openSettings(from) {
+  showOverlayFull();
+  const ov = $("#overlay");
+  const speeds = [["Slow",32],["Normal",16],["Fast",7],["Instant",0]];
+  ov.innerHTML = `
+    <div class="panel settings">
+      <h2 class="panel-title">⚙ SETTINGS</h2>
+      <div class="set-row"><label>Text speed</label>
+        <div class="set-opts">${speeds.map(([n,v])=>`<button class="set-btn ${Settings.textSpeed===v?"sel":""}" data-sp="${v}">${n}</button>`).join("")}</div>
+      </div>
+      <div class="set-row"><label>Volume</label>
+        <input id="volRange" type="range" min="0" max="100" value="${Math.round(Settings.volume*100)}">
+        <span id="volVal">${Math.round(Settings.volume*100)}%</span>
+        <button class="set-btn ${Settings.muted?"sel":""}" id="muteToggle">${Settings.muted?"Muted":"Sound on"}</button>
+      </div>
+      <p class="panel-sub">The quick ♪ button (top-right) also toggles sound at any time.</p>
+      <button class="big-btn" id="setBack">◀ Back</button>
+    </div>`;
+  ov.querySelectorAll(".set-btn[data-sp]").forEach((b)=>{
+    b.onclick = () => { Settings.textSpeed = +b.dataset.sp; saveSettings();
+      ov.querySelectorAll(".set-btn[data-sp]").forEach(x=>x.classList.toggle("sel", x===b)); };
+  });
+  const vr = ov.querySelector("#volRange");
+  vr.oninput = () => { audioKick(); Settings.volume = vr.value/100; $("#volVal").textContent = vr.value+"%";
+    if (window.GameAudio) GameAudio.setVolume(Settings.volume); saveSettings(); };
+  ov.querySelector("#muteToggle").onclick = () => { audioKick(); Settings.muted = !Settings.muted;
+    saveSettings(); applySettings(); openSettings(from); };
+  ov.querySelector("#setBack").onclick = () => { if (window.GameAudio) GameAudio.sfx("back"); from==="hub"?openHub():showTitle(); };
+}
+
+// ---------------------------------------------------------------- Save / Load menus
+function slotRowsHTML(mode) {
+  const rows = [];
+  const entry = (key, label) => {
+    const d = readSlot(key);
+    const meta = d ? `${d.meta.ch} · ${d.meta.bonds} bond${d.meta.bonds===1?"":"s"} · ${new Date(d.ts).toLocaleString()}` : "— empty —";
+    const action = mode === "save"
+      ? `<button class="big-btn slot-act" data-key="${key}">Save here</button>`
+      : `<button class="big-btn slot-act" data-key="${key}" ${d?"":"disabled"}>Load</button>`;
+    rows.push(`<div class="slot-row"><div class="slot-info"><b>${label}</b><span>${meta}</span></div>${action}</div>`);
+  };
+  if (mode === "load") entry(AUTO_SLOT, "Autosave");
+  SLOT_KEYS.forEach((k,i)=>entry(k, "Slot " + (i+1)));
+  return rows.join("");
+}
+function openSaveMenu() {
+  showOverlayFull();
+  const ov = $("#overlay");
+  ov.innerHTML = `
+    <div class="panel slots">
+      <h2 class="panel-title">💾 SAVE GAME</h2>
+      <p class="panel-sub">Progress autosaves automatically. Keep manual backups in three slots.</p>
+      <div class="slot-list">${slotRowsHTML("save")}</div>
+      <button class="big-btn" id="back">◀ Back</button>
+    </div>`;
+  ov.querySelectorAll(".slot-act").forEach((b)=>{
+    b.onclick = () => { writeSlot(b.dataset.key); if (window.GameAudio) GameAudio.sfx("select"); openSaveMenu();
+      b.textContent = "Saved!"; };
+  });
+  ov.querySelector("#back").onclick = () => openHub();
+}
+function openLoadMenu(from) {
+  showOverlayFull();
+  const ov = $("#overlay");
+  ov.innerHTML = `
+    <div class="panel slots">
+      <h2 class="panel-title">📂 LOAD GAME</h2>
+      <p class="panel-sub">Pick a save to resume from.</p>
+      <div class="slot-list">${slotRowsHTML("load")}</div>
+      <button class="big-btn" id="back">◀ Back</button>
+    </div>`;
+  ov.querySelectorAll(".slot-act").forEach((b)=>{
+    if (b.disabled) return;
+    b.onclick = () => { if (loadSlot(b.dataset.key)) { if (window.GameAudio) GameAudio.sfx("select"); resume(); } };
+  });
+  ov.querySelector("#back").onclick = () => { from==="hub"?openHub():showTitle(); };
+}
+
+// ---------------------------------------------------------------- Defense (relationship-gated)
+function runDefense(d, done) {
+  showOverlayFull();
+  const ov = $("#overlay");
+  const aff = State.affection[d.id] || 0;
+  const canVouch = aff >= (d.threshold || 3);
+  const c = CHARACTERS[d.id];
+  ov.innerHTML = `
+    <div class="panel defense" style="--accent:${c.palette.accent}">
+      <h2 class="panel-title">🛡 DEFEND ${c.short.toUpperCase()}</h2>
+      <div class="defense-top">
+        <div class="defense-portrait"><div class="sprite-img" style="background-image:url('${artFor(d.id)}')"></div></div>
+        <div>
+          <p class="defense-prompt">${d.prompt}</p>
+          <div class="defense-meter">Your bond with ${c.short}: <span class="meter">${"♥".repeat(aff)}<span class="m-empty">${"♥".repeat(MAX_AFFECTION-aff)}</span></span></div>
+        </div>
+      </div>
+      <div class="defense-opts">
+        <button class="choice-btn ${canVouch?"":"locked"}" id="vouch" ${canVouch?"":"disabled"}>
+          ${canVouch ? d.optionBonded : `🔒 ${d.optionBonded}`}
+          ${canVouch ? "" : `<span class="lock-note">${d.lockedText || "You don't know them well enough to stake your word on it."}</span>`}
+        </button>
+        <button class="choice-btn" id="neutral">${d.optionNeutral}</button>
+      </div>
+      <div class="defense-msg" id="dmsg"></div>
+    </div>`;
+  const finish = () => { if (window.GameAudio) GameAudio.sfx("select"); ov.style.display="none"; $("#stage").style.display=""; done(); };
+  const v = ov.querySelector("#vouch");
+  if (canVouch) v.onclick = () => {
+    State.flags[d.flag] = true; save();
+    if (window.GameAudio) GameAudio.sfx("good");
+    $("#dmsg").innerHTML = `<span class="good">You spoke for them.</span> ${escapeHtml(d.successText)}`;
+    showContinue();
+  };
+  ov.querySelector("#neutral").onclick = () => {
+    $("#dmsg").innerHTML = escapeHtml(d.neutralText);
+    showContinue();
+  };
+  function showContinue() {
+    ov.querySelectorAll(".defense-opts button").forEach(b=>b.disabled=true);
+    const n = el("button","big-btn","▶ Continue"); n.onclick = finish; $("#dmsg").appendChild(n);
+  }
 }
 
 // ---------------------------------------------------------------- Epilogue
@@ -686,26 +841,47 @@ function showOverlayFull() {
   $("#overlay").style.display = "flex";
 }
 
-// ---------------------------------------------------------------- Save/Load
-function save() {
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify(State)); } catch(e){}
+// ---------------------------------------------------------------- Save/Load (slots)
+function slotMeta() {
+  const f = State.flags || {};
+  let ch = "Prologue";
+  if (f.ch6done) ch = "Complete";
+  else for (let i = 5; i >= 1; i--) { if (f["ch"+i+"done"]) { ch = "Chapter " + (i+1); break; } }
+  if (ch === "Prologue" && f.prologueDone) ch = "Chapter 1";
+  const bonds = Object.keys(f).filter((k)=>k.startsWith("ft_")).length;
+  return { ch, bonds };
 }
-function load() {
+function writeSlot(key) {
   try {
-    const raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) return false;
-    const data = JSON.parse(raw);
-    Object.assign(State, data);
-    if (!Array.isArray(State.log)) State.log = [];
-    if (!Array.isArray(State.bullets)) State.bullets = [];
-    if (!State.affection || typeof State.affection !== "object") State.affection = {};
-    if (typeof State.slots !== "number") State.slots = 0;
+    localStorage.setItem(key, JSON.stringify({ state: State, meta: slotMeta(), ts: Date.now() }));
     return true;
-  } catch(e){ return false; }
+  } catch (e) { return false; }
 }
-function hasSave() {
-  try { return !!localStorage.getItem(SAVE_KEY); } catch(e){ return false; }
+function readSlot(key) {
+  try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : null; } catch (e) { return null; }
 }
+function applyState(s) {
+  Object.assign(State, s);
+  if (!Array.isArray(State.log)) State.log = [];
+  if (!Array.isArray(State.bullets)) State.bullets = [];
+  if (!State.affection || typeof State.affection !== "object") State.affection = {};
+  if (typeof State.slots !== "number") State.slots = 0;
+}
+// autosave
+function save() { writeSlot(AUTO_SLOT); }
+function loadSlot(key) {
+  const d = readSlot(key);
+  if (!d) return false;
+  applyState(d.state || d); // tolerate legacy flat saves
+  return true;
+}
+function latestSlotKey() {
+  const all = [AUTO_SLOT, ...SLOT_KEYS].map((k)=>({ k, d: readSlot(k) })).filter((x)=>x.d);
+  if (!all.length) return null;
+  all.sort((a,b)=>(b.d.ts||0)-(a.d.ts||0));
+  return all[0].k;
+}
+function hasSave() { return !!latestSlotKey(); }
 
 // ---------------------------------------------------------------- Boot
 function startNew() {
@@ -714,26 +890,35 @@ function startNew() {
   save();
   runScene("prologue");
 }
-function continueGame() {
-  load();
+function resume() {
   if (State.freetimeOpen) openHub();
   else runScene("prologue");
 }
+function continueGame() {
+  const k = latestSlotKey();
+  if (k && loadSlot(k)) resume();
+  else startNew();
+}
 
-function audioKick() { if (window.GameAudio) GameAudio.start(); }
+function audioKick() { if (window.GameAudio) { GameAudio.start(); applySettings(); } }
 
 window.addEventListener("DOMContentLoaded", () => {
+  loadSettings();
   $("#newBtn").onclick = () => { audioKick(); GameAudio && GameAudio.sfx("select"); startNew(); };
   $("#continueBtn").onclick = () => { audioKick(); GameAudio && GameAudio.sfx("select"); continueGame(); };
+  $("#loadBtn").onclick = () => { audioKick(); openLoadMenu("title"); };
   $("#galleryTitleBtn").onclick = () => { audioKick(); openGallery(); };
+  $("#setTitleBtn").onclick = () => { audioKick(); openSettings("title"); };
   $("#stage").addEventListener("click", advance);
   const mb = $("#muteBtn");
   if (mb) mb.onclick = () => {
     audioKick();
     const m = GameAudio ? GameAudio.toggle() : true;
+    Settings.muted = m; saveSettings();
     mb.textContent = m ? "♪̶" : "♪";
     mb.classList.toggle("muted", m);
   };
+  applySettings();
   document.addEventListener("keydown", (e) => {
     if ((e.key === " " || e.key === "Enter") && $("#stage").style.display !== "none") {
       e.preventDefault(); advance();
